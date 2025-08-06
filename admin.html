@@ -40,6 +40,7 @@
             <img src="848ac857-7327-47f4-b080-7313d6823a80.png" alt="Sportiva Store Logo" class="dashboard-logo">
             <h1>Panel de Control</h1>
             <div class="header-actions">
+                <button id="settings-btn" class="btn btn-secondary">Configuración</button>
                 <button id="add-product-btn" class="btn">Agregar Producto</button>
                 <button id="logout-btn" class="btn btn-secondary">Cerrar Sesión</button>
             </div>
@@ -48,6 +49,32 @@
         <main class="dashboard-content">
             <div id="product-grid" class="product-grid">
                 <!-- Los productos se cargarán aquí dinámicamente -->
+            </div>
+        </main>
+    </div>
+
+    <!-- Vista de Configuración del Sitio -->
+    <div id="settings-view" class="view">
+        <div class="dashboard-header">
+            <img src="848ac857-7327-47f4-b080-7313d6823a80.png" alt="Sportiva Store Logo" class="dashboard-logo">
+            <h1>Configuración del Sitio</h1>
+            <div class="header-actions">
+                <button id="back-to-dashboard-btn" class="btn btn-secondary">Volver</button>
+            </div>
+        </div>
+        <main class="dashboard-content">
+            <div class="settings-form-container">
+                <form id="settings-form">
+                    <div class="form-group">
+                        <label for="page-title-input">Título de la página</label>
+                        <input type="text" id="page-title-input" placeholder="Ej: Sportiva Store - Supera Tus Límites">
+                    </div>
+                    <div class="form-group">
+                        <label for="bg-color-input">Color de fondo</label>
+                        <input type="color" id="bg-color-input" value="#ffffff">
+                    </div>
+                    <button type="submit" class="btn">Guardar Configuración</button>
+                </form>
             </div>
         </main>
     </div>
@@ -119,6 +146,10 @@
     </div>
 
     <!-- Scripts necesarios -->
+    <!-- Agrega Firebase SDKs aquí -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    
     <script src="products-db.js"></script>
     <script src="admin.js"></script>
 </body>

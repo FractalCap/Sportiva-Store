@@ -7,6 +7,88 @@ const DB_KEY = 'sportivaProductsDB';
 // --- Global Cart State & Functions ---
 let cart = JSON.parse(localStorage.getItem('sportivaCart')) || [];
 
+// ===================================================================
+// ===              INICIALIZACIÓN DE FIREBASE                     ===
+// ===================================================================
+
+// TODO: Reemplaza con tu propia configuración de Firebase.
+// Puedes encontrar esto en tu Consola de Firebase -> Configuración del proyecto -> Tus aplicaciones -> Web
+const firebaseConfig = {
+  apiKey: "AIzaSyANNCmSis_xab8VD1OOOUDmx1-aQB2xBW8",
+  authDomain: "sportivastore-5ffa2.firebaseapp.com",
+  projectId: "sportivastore-5ffa2",
+  storageBucket: "sportivastore-5ffa2.firebasestorage.app",
+  messagingSenderId: "574454171007",
+  appId: "1:574454171007:web:a5286a66de190e338ec64a"
+};
+
+// Inicializa Firebase
+firebase.initializeApp(firebaseConfig);
+
+// Inicializa Firestore
+const db = firebase.firestore();
+
+// ===================================================================
+// ===            FUNCIONES DE LECTURA/ESCRITURA DE DATOS          ===
+// ===================================================================
+
+/**
+ * Guarda los datos de configuración del sitio web en Firestore.
+ * Los datos se guardan en la colección 'website', documento 'config'.
+ * @param {object} data - Objeto con los datos a guardar (ej. { pageTitle: "...", bgColor: "..." })
+ */
+async function saveWebsiteData(data) {
+    try {
+        const docRef = db.collection('website').doc('config');
+        await docRef.set(data);
+        console.log("Datos guardados en Firestore correctamente.");
+    } catch (e) {
+        console.error("Error al guardar en Firestore:", e);
+    }
+}
+
+/**
+ * Lee los datos de configuración del sitio web desde Firestore.
+ * Los datos se leen de la colección 'website', documento 'config'.
+ * @returns {Promise<object|null>} - Una promesa que resuelve con los datos o null si no existen.
+ */
+async function loadWebsiteData() {
+    try {
+        const docRef = db.collection('website').doc('config');
+        const doc = await docRef.get();
+        if (doc.exists) {
+            console.log("Datos leídos de Firestore:", doc.data());
+            return doc.data();
+        } else {
+            console.log("No se encontró el documento de configuración. Usando valores predeterminados.");
+            return null;
+        }
+    } catch (e) {
+        console.error("Error al leer de Firestore:", e);
+        return null;
+    }
+}
+
+/**
+ * Aplica los datos de configuración del sitio web a la página actual.
+ * Modifica el título de la página y el color de fondo del body.
+ * @param {object} data - Objeto con los datos de configuración.
+ */
+function applyWebsiteData(data) {
+    if (data) {
+        // Actualiza el título de la página si está disponible
+        if (data.pageTitle) {
+            document.title = data.pageTitle;
+        }
+        // Actualiza el color de fondo del body si está disponible
+        if (data.bgColor) {
+            document.body.style.backgroundColor = data.bgColor;
+        }
+    }
+}
+
+// --- Resto de tu código (se mantiene igual) ---
+
 // Function to format currency to Colombian Pesos (COP)
 const formatCurrency = (price) => {
     if (typeof price !== 'number') {
@@ -39,9 +121,8 @@ function renderCartItems() {
     cart.forEach(item => {
         const cartItemEl = document.createElement('div');
         cartItemEl.classList.add('cart-item');
-        cartItemEl.dataset.id = item.id; // El ID único del item en el carrito
+        cartItemEl.dataset.id = item.id; 
         
-        // Muestra la talla si existe
         const sizeInfo = item.size ? `<p class="size-info">Talla: ${item.size}</p>` : '';
 
         cartItemEl.innerHTML = `
@@ -96,14 +177,13 @@ function addToCart(id, name, price, image, quantity = 1, size = null) {
     const existingItem = cart.find(item => item.id === id);
     if (existingItem) {
         existingItem.quantity += quantity;
-        existingItem.price = price; // Actualiza el precio por si acaso
+        existingItem.price = price;
     } else {
         cart.push({ id, name, price, image, quantity, size });
     }
     saveAndRenderCart();
 }
 
-// --- Dynamic Product Rendering ---
 function initializeProducts() {
     const storedProducts = localStorage.getItem(DB_KEY);
     if (storedProducts) {
@@ -114,30 +194,24 @@ function initializeProducts() {
             siteProducts = productsDB;
         }
     } else {
-        siteProducts = productsDB; // Fallback to original DB
+        siteProducts = productsDB;
     }
 }
 
 function renderProductGrids() {
-    // Grids for specific women categories
     const shortsGrid = document.getElementById('shorts-grid');
     const yogaGrid = document.getElementById('yoga-grid');
     const topsGrid = document.getElementById('tops-grid');
     const legginsGrid = document.getElementById('leggins-grid');
     const enterizosGrid = document.getElementById('enterizos-grid');
     const womenOthersGrid = document.getElementById('women-others-grid');
-
-    // Grids for main categories
     const menGrid = document.getElementById('men-grid');
     const discountsGrid = document.getElementById('discounts-grid');
 
-    // Ensure all grid containers exist before proceeding
     if (!shortsGrid || !yogaGrid || !topsGrid || !legginsGrid || !enterizosGrid || !womenOthersGrid || !menGrid || !discountsGrid) {
-        // This can happen if the user is not on index.html
         return;
     }
     
-    // Clear grids before rendering
     shortsGrid.innerHTML = '';
     yogaGrid.innerHTML = '';
     topsGrid.innerHTML = '';
@@ -181,7 +255,6 @@ function renderProductGrids() {
             </div>
         `;
 
-        // Sort products into their respective grids
         if (product.category === 'women') {
             const pId = product.id.toLowerCase();
             if (pId.includes('short')) {
@@ -205,9 +278,11 @@ function renderProductGrids() {
     }
 }
 
-
-// --- Logic to run after DOM is loaded ---
 document.addEventListener('DOMContentLoaded', () => {
+    // Carga los datos de la configuración del sitio desde Firestore al cargar la página
+    loadWebsiteData().then(data => {
+        applyWebsiteData(data);
+    });
     
     initializeProducts();
     renderProductGrids();
@@ -408,7 +483,6 @@ document.addEventListener('DOMContentLoaded', () => {
             cart.forEach(item => {
                 const itemTotal = item.price * item.quantity;
                 total += itemTotal;
-                // El nombre del item ya incluye la talla, así que se agrega directamente
                 message += `- *${item.quantity}x* ${item.name} (${formatCurrency(item.price)} c/u)\n`;
             });
             message += `\n*Total del Pedido:* ${formatCurrency(total)}\n`;

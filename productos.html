@@ -180,6 +180,10 @@
         <div class="cart-footer"><div class="cart-total"><span>Total:</span><span id="cart-total-price">$0</span></div><button class="btn checkout-btn">Finalizar Compra</button></div>
     </div>
     
+    <!-- Agrega Firebase SDKs aquí -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    
     <script src="products-db.js"></script>
     <script src="script.js"></script>
     <script>
@@ -200,42 +204,41 @@
                 return;
             }
             
-            document.title = `${product.name} - Sportiva Store`;
+            // El título de la página se actualizará desde Firestore a través de script.js
+            // document.title = `${product.name} - Sportiva Store`;
 
             // --- Lógica para renderizar el producto ---
             const renderProduct = () => {
-                let selectedColor = product.colors[0];
+                // Find the initial model/color based on the first entry
+                let selectedColor = product.colors ? product.colors[0] : null;
+                let selectedModel = product.models ? product.models[0] : null;
+
+                // Determine the initial price to display
+                let initialPrice = product.unitPrice || (selectedModel ? selectedModel.price : 0);
+
                 let priceHTML = '';
-                let totalStock = 0;
-
-                // Calcula el stock total solo si el producto maneja tallas
-                if (product.sizes) {
-                    totalStock = Object.values(product.sizes).reduce((sum, size) => sum + (size.stock || 0), 0);
-                }
-
-                // Determina el precio a mostrar
                 if (product.category === 'discount' && product.wholesalePrice && product.wholesalePrice < product.unitPrice) {
                     const discount = Math.round((1 - (product.wholesalePrice / product.unitPrice)) * 100);
-                    priceHTML = `<span class="old-price">$${product.unitPrice.toLocaleString('es-CO')}</span><span class="current-price">$${product.wholesalePrice.toLocaleString('es-CO')}</span><span class="save-badge">AHORRA ${discount}%</span>`;
+                    priceHTML = `<span class="old-price">${formatCurrency(product.unitPrice)}</span><span class="current-price">${formatCurrency(product.wholesalePrice)}</span><span class="save-badge">AHORRA ${discount}%</span>`;
+                    initialPrice = product.wholesalePrice;
                 } else {
-                    const price = product.unitPrice || (product.models ? product.models[0].price : 0);
-                    priceHTML = `<span class="current-price single-price">$${price.toLocaleString('es-CO')}</span>`;
+                    priceHTML = `<span class="current-price single-price">${formatCurrency(initialPrice)}</span>`;
                 }
+                
+                const initialImage = selectedColor ? selectedColor.image : (selectedModel ? selectedModel.image : 'placeholder.jpg');
 
-                const initialImage = product.colors[0].image || 'placeholder.jpg';
-
-                // Construye el HTML del detalle del producto
+                // Build the main product detail HTML
                 productDetailContainer.innerHTML = `
                     <div class="product-detail-image-wrapper">
                         <img src="${initialImage}" alt="${product.name}" id="product-detail-image" onerror="this.onerror=null;this.src='https://placehold.co/600x800/f0f0f0/333?text=${encodeURIComponent(product.name)}';">
                     </div>
                     <div class="product-detail-info">
                         <h1 class="product-detail-title">${product.name}</h1>
-                        <div class="product-pricing-new">${priceHTML}</div>
+                        <div class="product-pricing-new" id="product-price-display">${priceHTML}</div>
                         <div id="out-of-stock-container"></div>
                         
                         <div class="product-colors-new">
-                            <p class="product-options-label">COLOR: <span id="selected-color-name">${product.colors[0].name}</span></p>
+                            <p class="product-options-label">COLOR: <span id="selected-color-name">${(selectedColor && selectedColor.name) || (selectedModel && selectedModel.name) || ''}</span></p>
                             <div class="color-palette-new" id="color-palette-container"></div>
                         </div>
 
@@ -257,6 +260,7 @@
                     </div>`;
 
                 const addToCartBtn = document.getElementById('add-to-cart-btn');
+                const priceDisplay = document.getElementById('product-price-display');
 
                 // Renderizar selector de tallas si el producto tiene la propiedad 'sizes'
                 if (product.sizes) {
@@ -270,7 +274,7 @@
                     sizeOrder.forEach(size => {
                         if (product.sizes[size]) {
                             const stock = product.sizes[size].stock;
-                            const isSpecialOrder = size === 'XS' || size === 'L';
+                            const isSpecialOrder = stock === -1; // -1 indica "por encargo"
                             const isDisabled = stock === 0 && !isSpecialOrder;
                             
                             sizeSelectorHTML += `
@@ -287,13 +291,20 @@
                     sizeContainer.innerHTML = sizeSelectorHTML;
                 }
 
-                // Función para actualizar estado del botón y mensaje de stock
+                // Function to update the stock status and button state
                 const updateStockStatus = () => {
                     const outOfStockContainer = document.getElementById('out-of-stock-container');
                     const quantitySelector = document.querySelector('.quantity-selector');
-                    
-                    // Si el producto maneja tallas y el stock total es 0, se considera agotado.
-                    if (product.sizes && totalStock === 0) {
+                    const hasSizes = !!product.sizes;
+
+                    // If product has sizes and total stock is 0, it's out of stock
+                    let isOutOfStock = false;
+                    if (hasSizes) {
+                        const totalStock = Object.values(product.sizes).reduce((sum, size) => sum + Math.max(0, size.stock), 0);
+                        isOutOfStock = totalStock === 0;
+                    }
+
+                    if (isOutOfStock) {
                         outOfStockContainer.innerHTML = `<div class="out-of-stock-message">Producto Agotado</div>`;
                         addToCartBtn.disabled = true;
                         if (quantitySelector) {
@@ -307,39 +318,52 @@
                         }
                     }
                 };
-                
+
                 updateStockStatus();
 
-                // Lógica de selectores de color
+                // Lógica de selectores de color/modelo
                 const paletteContainer = document.getElementById('color-palette-container');
                 const productImage = document.getElementById('product-detail-image');
                 const selectedColorName = document.getElementById('selected-color-name');
 
-                product.colors.forEach((color, index) => {
-                    const swatch = document.createElement('span');
-                    swatch.className = 'color-swatch-new';
-                    swatch.style.backgroundColor = color.hex;
-                    if (index === 0) swatch.classList.add('active');
-                    
-                    swatch.addEventListener('click', () => {
-                        if (selectedColor.name === color.name) return;
-                        selectedColor = color;
-                        selectedColorName.textContent = color.name;
+                const variants = product.colors || product.models;
+                if (variants) {
+                    variants.forEach((variant, index) => {
+                        const swatch = document.createElement('span');
+                        swatch.className = 'color-swatch-new';
+                        swatch.style.backgroundColor = variant.hex || '#ccc'; // Usa hex si está disponible, o un color por defecto
+                        if (index === 0) swatch.classList.add('active');
                         
-                        productImage.classList.add('image-fade-out');
-                        setTimeout(() => {
-                            productImage.src = color.image;
-                            productImage.alt = `${product.name} - ${color.name}`;
-                            productImage.onerror = () => { productImage.src = `https://placehold.co/600x800/f0f0f0/333?text=${encodeURIComponent(color.name)}`; };
-                            productImage.classList.remove('image-fade-out');
-                        }, 400);
+                        swatch.addEventListener('click', () => {
+                            const currentSelected = product.colors ? selectedColor : selectedModel;
+                            if (currentSelected && currentSelected.name === variant.name) return;
 
-                        document.querySelector('.color-swatch-new.active').classList.remove('active');
-                        swatch.classList.add('active');
+                            if (product.colors) {
+                                selectedColor = variant;
+                            } else if (product.models) {
+                                selectedModel = variant;
+                                // Actualiza la visualización del precio para los modelos
+                                const newPrice = selectedModel.price || 0;
+                                priceDisplay.innerHTML = `<span class="current-price single-price">${formatCurrency(newPrice)}</span>`;
+                            }
+                            
+                            selectedColorName.textContent = variant.name;
+                            
+                            productImage.classList.add('image-fade-out');
+                            setTimeout(() => {
+                                productImage.src = variant.image;
+                                productImage.alt = `${product.name} - ${variant.name}`;
+                                productImage.onerror = () => { productImage.src = `https://placehold.co/600x800/f0f0f0/333?text=${encodeURIComponent(variant.name)}`; };
+                                productImage.classList.remove('image-fade-out');
+                            }, 400);
+
+                            document.querySelector('.color-swatch-new.active').classList.remove('active');
+                            swatch.classList.add('active');
+                        });
+                        paletteContainer.appendChild(swatch);
                     });
-                    paletteContainer.appendChild(swatch);
-                });
-
+                }
+                
                 // Lógica del botón "Agregar al Carrito"
                 addToCartBtn.addEventListener('click', () => {
                     let selectedSize = null;
@@ -352,12 +376,22 @@
                         selectedSize = checkedSizeInput.value;
                     }
 
-                    const cartId = `${product.id}-${selectedColor.name.toLowerCase().replace(/\s+/g, '-')}` + (selectedSize ? `-${selectedSize}` : '');
-                    const cartName = `${product.name} - ${selectedColor.name}` + (selectedSize ? ` (Talla: ${selectedSize})` : '');
-                    const cartImage = selectedColor.image;
-                    const quantity = parseInt(document.getElementById('quantity-input').value);
-                    let priceToUse = product.wholesalePrice || product.unitPrice;
+                    // Determina los detalles del artículo basándose en el tipo de producto (colección, estándar)
+                    let finalProduct = product;
+                    if (finalProduct.models) {
+                        finalProduct = selectedModel; // Si es una colección con modelos, usa el modelo seleccionado
+                    } else {
+                        finalProduct = selectedColor; // Si es un producto con colores, usa el color seleccionado
+                    }
                     
+                    const cartId = `${finalProduct.id}` + (selectedSize ? `-${selectedSize}` : '');
+                    const cartName = `${product.name}` + (finalProduct.name ? ` - ${finalProduct.name}` : '') + (selectedSize ? ` (Talla: ${selectedSize})` : '');
+                    const cartImage = finalProduct.image;
+                    const quantity = parseInt(document.getElementById('quantity-input').value);
+                    // El precio a usar debe ser el del producto principal si no es una colección,
+                    // o el del modelo/color seleccionado si lo es.
+                    let priceToUse = product.wholesalePrice || product.unitPrice || finalProduct.price;
+
                     if (quantity <= 0) return;
 
                     addToCart(cartId, cartName, priceToUse, cartImage, quantity, selectedSize);
@@ -365,13 +399,7 @@
                 });
             };
 
-            // Lógica especial para la colección de enterizos
-            if (productId === 'enterizos') {
-                // La colección de enterizos ahora también tiene tallas, se renderiza de forma similar a otros productos.
-                renderProduct(); 
-            } else {
-                renderProduct();
-            }
+            renderProduct(); // Llama a renderProduct después de que el DOM esté listo
 
             // Lógica general (cantidad, acordeón) que se aplica después de renderizar
             const quantityInput = document.getElementById('quantity-input');

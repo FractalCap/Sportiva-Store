@@ -1,12 +1,16 @@
+/* START OF admin.js FILE */
 document.addEventListener('DOMContentLoaded', () => {
     // --- ELEMENTOS DEL DOM ---
     const loginView = document.getElementById('login-view');
     const dashboardView = document.getElementById('dashboard-view');
+    const settingsView = document.getElementById('settings-view'); // Nuevo elemento: Vista de configuración
     const loginForm = document.getElementById('login-form');
     const logoutBtn = document.getElementById('logout-btn');
     const loginError = document.getElementById('login-error');
     const productGrid = document.getElementById('product-grid');
     const addProductBtn = document.getElementById('add-product-btn');
+    const settingsBtn = document.getElementById('settings-btn'); // Nuevo botón: Para ir a la configuración
+    const backToDashboardBtn = document.getElementById('back-to-dashboard-btn'); // Nuevo botón: Para volver al dashboard
     const modal = document.getElementById('product-modal');
     const closeModalBtn = document.querySelector('.close-modal-btn');
     const cancelBtn = document.getElementById('cancel-btn');
@@ -16,6 +20,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const addColorBtn = document.getElementById('add-color-btn');
     const hasSizesCheckbox = document.getElementById('has-sizes-checkbox');
     const stockManagementContainer = document.getElementById('stock-management-container');
+    const settingsForm = document.getElementById('settings-form'); // Nuevo formulario: Para la configuración del sitio
+    const pageTitleInput = document.getElementById('page-title-input'); // Nuevo input: Título de la página
+    const bgColorInput = document.getElementById('bg-color-input'); // Nuevo input: Color de fondo
 
     // --- ESTADO DE LA APLICACIÓN ---
     let currentProducts = {};
@@ -214,6 +221,44 @@ document.addEventListener('DOMContentLoaded', () => {
             renderProductGrid();
         }
     };
+    
+    // --- LÓGICA DE LA NUEVA VISTA DE CONFIGURACIÓN ---
+    const showSettingsView = async () => {
+        dashboardView.classList.remove('active');
+        settingsView.classList.add('active');
+        // Cargar datos actuales de Firestore en el formulario de configuración
+        // Asegúrate de que loadWebsiteData esté disponible globalmente o importado
+        if (typeof loadWebsiteData !== 'undefined') {
+            const data = await loadWebsiteData();
+            if (data) {
+                pageTitleInput.value = data.pageTitle || '';
+                bgColorInput.value = data.bgColor || '#ffffff';
+            }
+        } else {
+            console.error("loadWebsiteData no está definido. Asegúrate de que script.js se cargue antes.");
+        }
+    };
+    
+    const showDashboardView = () => {
+        settingsView.classList.remove('active');
+        dashboardView.classList.add('active');
+    };
+
+    const handleSettingsSubmit = (e) => {
+        e.preventDefault();
+        const data = {
+            pageTitle: pageTitleInput.value,
+            bgColor: bgColorInput.value
+        };
+        // Llama a la función de Firestore para guardar los datos
+        // Asegúrate de que saveWebsiteData esté disponible globalmente o importado
+        if (typeof saveWebsiteData !== 'undefined') {
+            saveWebsiteData(data);
+            alert('Configuración guardada. Recarga el sitio web para ver los cambios.');
+        } else {
+            console.error("saveWebsiteData no está definido. Asegúrate de que script.js se cargue antes.");
+        }
+    };
 
     // --- AUTENTICACIÓN ---
     const showDashboard = () => {
@@ -246,6 +291,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- EVENT LISTENERS GENERALES ---
     addProductBtn.addEventListener('click', () => openModal());
+    settingsBtn.addEventListener('click', showSettingsView); // Nuevo evento: Abre la vista de configuración
+    backToDashboardBtn.addEventListener('click', showDashboardView); // Nuevo evento: Vuelve al dashboard desde configuración
+    settingsForm.addEventListener('submit', handleSettingsSubmit); // Nuevo evento: Guarda la configuración del sitio
     closeModalBtn.addEventListener('click', closeModal);
     cancelBtn.addEventListener('click', closeModal);
     productForm.addEventListener('submit', handleFormSubmit);
