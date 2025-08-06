@@ -184,7 +184,9 @@ function renderProductGrids() {
     if (!grids.shorts) return;
 
     // Limpiar todas las grillas antes de llenarlas.
-    Object.values(grids).forEach(grid => grid.innerHTML = '');
+    Object.values(grids).forEach(grid => {
+        if (grid) grid.innerHTML = '';
+    });
 
     for (const productId in siteProducts) {
         const product = siteProducts[productId];
@@ -334,9 +336,11 @@ function renderProductDetail() {
     if (product.hasSizes && product.sizes) {
         const sizeContainer = document.getElementById('size-selector-container');
         const sizeOrder = ['XS', 'S', 'M', 'L', 'XL'];
+        // HTML a inyectar.
         let sizeSelectorHTML = `
             <div class="product-sizes-new">
                 <p class="product-options-label">TALLA:</p>
+                <p style="font-size: 0.8rem; color: #8a8a8a; margin-bottom: 1rem;">(Tallas XS, L y XL bajo encargo)</p>
                 <div class="size-selector-new">`;
         
         sizeOrder.forEach(size => {
@@ -345,12 +349,12 @@ function renderProductDetail() {
                 const isSpecialOrder = stock === -1;
                 const isDisabled = stock === 0 && !isSpecialOrder;
                 
+                // Ya no mostramos el texto '(por encargo)' individualmente.
                 sizeSelectorHTML += `
                     <div class="size-option-new">
                         <input type="radio" id="size-${size}" name="product-size" value="${size}" ${isDisabled ? 'disabled' : ''}>
                         <label for="size-${size}">
                             ${size}
-                            ${isSpecialOrder ? '<span class="special-order-text-shop">(por encargo)</span>' : ''}
                         </label>
                     </div>`;
             }
