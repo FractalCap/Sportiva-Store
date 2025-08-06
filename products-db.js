@@ -100,9 +100,9 @@ const productsDB = {
         sustainability: "Fabricado con tejidos reciclados de alto rendimiento.",
         productCare: "Lavar a máquina en frío, no usar secadora."
     },
-    'short-tradicional': {
-        id: 'short-tradicional',
-        name: 'Short Tradicional',
+    'short-unicolor': {
+        id: 'short-unicolor',
+        name: 'Short unicolor',
         category: 'women',
         unitPrice: 40000,
         wholesalePrice: null,
