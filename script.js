@@ -1,5 +1,5 @@
 /* =================================================================== */
-/* ============ SCRIPT.JS - ADAPTADO PARA GOOGLE SHEETS ============ */
+/* ============ SCRIPT.JS - VERSIÓN FINAL (TALLAS POR COLOR) ========= */
 /* =================================================================== */
 
 // --- CONFIGURACIÓN GLOBAL ---
@@ -7,9 +7,9 @@ const SHEETS_API_URL = 'https://script.google.com/macros/s/AKfycbxqWm2JPUK0IPmei
 let siteProducts = {};
 let cart = JSON.parse(localStorage.getItem('sportivaCart')) || [];
 
-/* =================================================================== */
-/* ============ LÓGICA DE LA BASE DE DATOS ============ */
-/* =================================================================== */
+// ===================================================================
+// === LÓGICA DE LA BASE DE DATOS (CONEXIÓN A GOOGLE SHEETS) ========
+// ===================================================================
 
 async function fetchProductsFromSheets() {
     const cachedProducts = sessionStorage.getItem('siteProductsCache');
@@ -32,9 +32,9 @@ async function fetchProductsFromSheets() {
     }
 }
 
-/* =================================================================== */
-/* ============ FUNCIONES DEL CARRITO ============ */
-/* =================================================================== */
+// ===================================================================
+// === FUNCIONES DEL CARRITO DE COMPRAS ===============================
+// ===================================================================
 
 const formatCurrency = (price) => {
     if (typeof price !== 'number') price = 0;
@@ -43,26 +43,52 @@ const formatCurrency = (price) => {
 
 function saveAndRenderCart() {
     localStorage.setItem('sportivaCart', JSON.stringify(cart));
-    renderCartItems();
+
+    // --- LÓGICA CENTRALIZADA DE DESCUENTO ---
+    const tieDyeId = 'short-tie-dye';
+    const tieDyeProduct = siteProducts[tieDyeId];
+    let applyTieDyeDiscount = false;
+
+    if (tieDyeProduct && tieDyeProduct.mayoristaPrice) {
+        const tieDyeItemsInCart = cart.filter(item => item.id.startsWith(tieDyeId));
+        const tieDyeQuantity = tieDyeItemsInCart.reduce((sum, item) => sum + item.quantity, 0);
+        if (tieDyeQuantity >= 2) {
+            applyTieDyeDiscount = true;
+        }
+    }
+    // --- FIN DE LA LÓGICA ---
+
+    renderCartItems(applyTieDyeDiscount);
     updateCartCounter();
-    updateCartTotal();
+    updateCartTotal(applyTieDyeDiscount);
 }
 
-function renderCartItems() {
-    const cartItemsContainer = document.getElementById('cart-items');
-    if (!cartItemsContainer) return;
-    cartItemsContainer.innerHTML = cart.length === 0 ? '<p style="padding: 1rem; text-align: center;">Tu carrito está vacío.</p>' : '';
+function renderCartItems(applyTieDyeDiscount) {
+    const container = document.getElementById('cart-items');
+    if (!container) return;
+    container.innerHTML = cart.length === 0 ? '<p style="padding: 1rem; text-align: center;">Tu carrito está vacío.</p>' : '';
+    
+    const tieDyeId = 'short-tie-dye';
+    const tieDyeProduct = siteProducts[tieDyeId];
+
     cart.forEach(item => {
-        const cartItemEl = document.createElement('div');
-        cartItemEl.className = 'cart-item';
-        cartItemEl.dataset.id = item.id;
+        const el = document.createElement('div');
+        el.className = 'cart-item';
+        el.dataset.id = item.id;
         const sizeInfo = item.size ? `<p class="size-info">Talla: ${item.size}</p>` : '';
-        cartItemEl.innerHTML = `
+
+        // Determinar el precio a mostrar para este item
+        let displayPrice = item.price;
+        if (applyTieDyeDiscount && item.id.startsWith(tieDyeId)) {
+            displayPrice = tieDyeProduct.mayoristaPrice;
+        }
+
+        el.innerHTML = `
             <img src="${item.image}" alt="${item.name}" onerror="this.onerror=null;this.src='https://placehold.co/80x80/f0f0f0/333?text=Img';">
             <div class="cart-item-info">
                 <h4>${item.name.replace(` (Talla: ${item.size})`, '')}</h4>
                 ${sizeInfo}
-                <p class="price">${formatCurrency(item.price)}</p>
+                <p class="price">${formatCurrency(displayPrice)}</p>
                 <div class="cart-item-actions">
                     <button class="quantity-btn" data-action="decrease">-</button>
                     <span>${item.quantity}</span>
@@ -70,24 +96,36 @@ function renderCartItems() {
                 </div>
             </div>
             <button class="remove-item-btn">&times;</button>`;
-        cartItemsContainer.appendChild(cartItemEl);
+        container.appendChild(el);
     });
 }
 
 function updateCartCounter() {
-    const cartCounter = document.getElementById('cart-counter');
-    if (!cartCounter) return;
-    const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
-    cartCounter.textContent = totalItems;
-    cartCounter.style.display = totalItems > 0 ? 'flex' : 'none';
+    const counter = document.getElementById('cart-counter');
+    if (!counter) return;
+    const total = cart.reduce((sum, item) => sum + item.quantity, 0);
+    counter.textContent = total;
+    counter.style.display = total > 0 ? 'flex' : 'none';
 }
 
-function updateCartTotal() {
-    const cartTotalPrice = document.getElementById('cart-total-price');
-    if (!cartTotalPrice) return;
-    const totalPrice = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-    cartTotalPrice.textContent = formatCurrency(totalPrice);
+function updateCartTotal(applyTieDyeDiscount) {
+    const totalEl = document.getElementById('cart-total-price');
+    if (!totalEl) return;
+
+    const tieDyeId = 'short-tie-dye';
+    const tieDyeProduct = siteProducts[tieDyeId];
+
+    const total = cart.reduce((sum, item) => {
+        let itemPrice = item.price;
+        if (applyTieDyeDiscount && item.id.startsWith(tieDyeId)) {
+            itemPrice = tieDyeProduct.mayoristaPrice;
+        }
+        return sum + (itemPrice * item.quantity);
+    }, 0);
+
+    totalEl.textContent = formatCurrency(total);
 }
+
 
 function addToCart(id, name, price, image, quantity = 1, size = null) {
     const existingItem = cart.find(item => item.id === id);
@@ -100,21 +138,20 @@ function addToCart(id, name, price, image, quantity = 1, size = null) {
 }
 
 function updateQuantity(id, change, isRemoval = false) {
-    const itemIndex = cart.findIndex(item => item.id === id);
-    if (itemIndex > -1) {
-        if (isRemoval) {
-            cart.splice(itemIndex, 1);
+    const index = cart.findIndex(item => item.id === id);
+    if (index > -1) {
+        if (isRemoval || (cart[index].quantity + change <= 0)) {
+            cart.splice(index, 1);
         } else {
-            cart[itemIndex].quantity += change;
-            if (cart[itemIndex].quantity <= 0) cart.splice(itemIndex, 1);
+            cart[index].quantity += change;
         }
     }
     saveAndRenderCart();
 }
 
-/* =================================================================== */
-/* ============ RENDERIZADO DINÁMICO DE PRODUCTOS ============ */
-/* =================================================================== */
+// ===================================================================
+// === RENDERIZADO DINÁMICO DE PRODUCTOS ============================
+// ===================================================================
 
 function renderProductGrids() {
     const grids = {
@@ -129,12 +166,10 @@ function renderProductGrids() {
     for (const productId in siteProducts) {
         const product = siteProducts[productId];
         const image = product.colors && product.colors.length > 0 ? product.colors[0].image : 'placeholder.jpg';
-        let priceHTML = '';
-        if (product.wholesalePrice && product.wholesalePrice < product.unitPrice) {
-            priceHTML = `<span class="old-price">Antes: ${formatCurrency(product.unitPrice)}</span><span class="new-price">Ahora: ${formatCurrency(product.wholesalePrice)}</span>`;
-        } else {
-            priceHTML = formatCurrency(product.unitPrice);
-        }
+        let priceHTML = (product.wholesalePrice && product.wholesalePrice < product.unitPrice)
+            ? `<span class="old-price">Antes: ${formatCurrency(product.unitPrice)}</span><span class="new-price">Ahora: ${formatCurrency(product.wholesalePrice)}</span>`
+            : formatCurrency(product.unitPrice);
+        
         const cardHTML = `
             <div class="luxury-product-card animate-on-scroll">
                 <div class="luxury-image-wrapper"><img src="${image}" alt="${product.name}" onerror="this.onerror=null;this.src='https://placehold.co/400x550/f0f0f0/333?text=${encodeURIComponent(product.name)}';"></div>
@@ -143,8 +178,9 @@ function renderProductGrids() {
                     <a href="productos.html?product=${product.id}" class="luxury-product-btn">Ver Detalles</a>
                 </div>
             </div>`;
+        
+        const pId = product.id.toLowerCase();
         if (product.category === 'women') {
-            const pId = product.id.toLowerCase();
             if (pId.includes('short')) grids.shorts.innerHTML += cardHTML;
             else if (pId.includes('yoga')) grids.yoga.innerHTML += cardHTML;
             else if (pId.includes('top')) grids.tops.innerHTML += cardHTML;
@@ -157,29 +193,25 @@ function renderProductGrids() {
             grids.discounts.innerHTML += cardHTML;
         }
     }
+    observeAnimatedElements();
 }
 
 function renderProductDetail() {
-    const productDetailContainer = document.getElementById('product-detail-main');
-    if (!productDetailContainer) return;
+    const container = document.getElementById('product-detail-main');
+    if (!container) return;
 
-    const params = new URLSearchParams(window.location.search);
-    const productId = params.get('product');
+    const productId = new URLSearchParams(window.location.search).get('product');
     const product = siteProducts[productId];
 
     if (!product) {
-        productDetailContainer.innerHTML = `<div class="product-not-found"><h2>Lo sentimos, producto no encontrado.</h2><a href="index.html" class="btn">Volver a la tienda</a></div>`;
+        container.innerHTML = `<div class="product-not-found"><h2>Lo sentimos, producto no encontrado.</h2><a href="index.html" class="btn">Volver a la tienda</a></div>`;
         return;
     }
 
     document.title = `${product.name} - Sportiva Store`;
 
-    // --- MEJORA PARA PRECIOS INDIVIDUALES ---
-    const initialVariant = product.colors.length > 0 ? product.colors[0] : {};
-    const initialImage = initialVariant.image || 'placeholder.jpg';
-    const initialColorName = initialVariant.name || '';
+    const initialVariant = product.colors[0] || {};
     
-    // Función para generar el HTML del precio dinámicamente
     const generatePriceHTML = (variant) => {
         let price = variant.price || product.unitPrice;
         let discountPrice = variant.discountPrice || product.wholesalePrice;
@@ -190,14 +222,13 @@ function renderProductDetail() {
         return `<span class="current-price single-price">${formatCurrency(price)}</span>`;
     };
 
-    productDetailContainer.innerHTML = `
-        <div class="product-detail-image-wrapper"><img src="${initialImage}" alt="${product.name}" id="product-detail-image" onerror="this.onerror=null;this.src='https://placehold.co/600x800/f0f0f0/333?text=${encodeURIComponent(product.name)}';"></div>
+    container.innerHTML = `
+        <div class="product-detail-image-wrapper"><img src="${initialVariant.image || 'placeholder.jpg'}" alt="${product.name}" id="product-detail-image"></div>
         <div class="product-detail-info">
             <h1 class="product-detail-title">${product.name}</h1>
             <div class="product-pricing-new" id="product-price-display">${generatePriceHTML(initialVariant)}</div>
-            <div id="out-of-stock-container"></div>
             <div class="product-colors-new">
-                <p class="product-options-label">COLOR: <span id="selected-color-name">${initialColorName}</span></p>
+                <p class="product-options-label">COLOR: <span id="selected-color-name">${initialVariant.name || ''}</span></p>
                 <div class="color-palette-new" id="color-palette-container"></div>
             </div>
             <div id="size-selector-container"></div>
@@ -220,7 +251,35 @@ function renderProductDetail() {
     const productImage = document.getElementById('product-detail-image');
     const selectedColorName = document.getElementById('selected-color-name');
     const priceDisplay = document.getElementById('product-price-display');
-    let selectedVariant = product.colors[0];
+    const sizeContainer = document.getElementById('size-selector-container');
+    let selectedVariant = initialVariant;
+
+    const renderSizeSelector = (variant) => {
+        if (!variant.hasSizes || !variant.sizes) {
+            sizeContainer.innerHTML = '';
+            return;
+        }
+        const sizeOrder = ['XS', 'S', 'M', 'L', 'XL'];
+        let sizeHTML = `
+            <div class="product-sizes-new">
+                <p class="product-options-label">TALLA:</p>
+                <p style="font-size: 0.8rem; color: #8a8a8a; margin-bottom: 1rem;">(Tallas XS, L y XL bajo encargo)</p>
+                <div class="size-selector-new">`;
+        sizeOrder.forEach(size => {
+            if (variant.sizes[size]) {
+                const stock = variant.sizes[size].stock;
+                const isSpecialOrder = stock === -1;
+                const isDisabled = stock === 0 && !isSpecialOrder;
+                sizeHTML += `
+                    <div class="size-option-new">
+                        <input type="radio" id="size-${size}" name="product-size" value="${size}" ${isDisabled ? 'disabled' : ''}>
+                        <label for="size-${size}">${size}${isSpecialOrder ? '' : ''}</label>
+                    </div>`;
+            }
+        });
+        sizeHTML += `</div></div>`;
+        sizeContainer.innerHTML = sizeHTML;
+    };
 
     product.colors.forEach((variant, index) => {
         const swatch = document.createElement('span');
@@ -231,52 +290,21 @@ function renderProductDetail() {
         swatch.addEventListener('click', () => {
             selectedVariant = variant;
             selectedColorName.textContent = variant.name;
-            priceDisplay.innerHTML = generatePriceHTML(variant); // Actualizar precio
+            priceDisplay.innerHTML = generatePriceHTML(variant);
+            renderSizeSelector(variant);
             
-            productImage.classList.add('image-fade-out');
-            setTimeout(() => {
-                productImage.src = variant.image;
-                productImage.alt = `${product.name} - ${variant.name}`;
-                productImage.classList.remove('image-fade-out');
-            }, 400);
-
-            document.querySelector('.color-swatch-new.active').classList.remove('active');
+            productImage.src = variant.image;
+            document.querySelector('.color-swatch-new.active')?.classList.remove('active');
             swatch.classList.add('active');
         });
         paletteContainer.appendChild(swatch);
     });
 
-    if (product.hasSizes && product.sizes) {
-        const sizeContainer = document.getElementById('size-selector-container');
-        const sizeOrder = ['XS', 'S', 'M', 'L', 'XL'];
-        let sizeSelectorHTML = `
-            <div class="product-sizes-new">
-                <p class="product-options-label">TALLA:</p>
-                <p style="font-size: 0.8rem; color: #8a8a8a; margin-bottom: 1rem;">(Tallas XS, L y XL bajo encargo)</p>
-                <div class="size-selector-new">`;
-        sizeOrder.forEach(size => {
-            if (product.sizes[size]) {
-                const stock = product.sizes[size].stock;
-                const isDisabled = stock === 0 && stock !== -1;
-                sizeSelectorHTML += `
-                    <div class="size-option-new">
-                        <input type="radio" id="size-${size}" name="product-size" value="${size}" ${isDisabled ? 'disabled' : ''}>
-                        <label for="size-${size}">${size}</label>
-                    </div>`;
-            }
-        });
-        sizeSelectorHTML += `</div></div>`;
-        sizeContainer.innerHTML = sizeSelectorHTML;
-    }
-
     document.getElementById('add-to-cart-btn').addEventListener('click', () => {
         let selectedSize = null;
-        if (product.hasSizes) {
-            const checkedSizeInput = document.querySelector('input[name="product-size"]:checked');
-            if (!checkedSizeInput) {
-                alert('Por favor, selecciona una talla.');
-                return;
-            }
+        if (selectedVariant.hasSizes) {
+            const checkedSizeInput = sizeContainer.querySelector('input[name="product-size"]:checked');
+            if (!checkedSizeInput) return alert('Por favor, selecciona una talla.');
             selectedSize = checkedSizeInput.value;
         }
         const quantity = parseInt(document.getElementById('quantity-input').value);
@@ -287,6 +315,7 @@ function renderProductDetail() {
         document.getElementById('cart-panel').classList.add('active');
     });
 
+    renderSizeSelector(initialVariant);
     setupPageInteractions();
 }
 
@@ -296,24 +325,36 @@ function setupPageInteractions() {
             const item = button.parentElement;
             item.classList.toggle('active');
             const content = button.nextElementSibling;
-            content.style.maxHeight = item.classList.contains('active') ? content.scrollHeight + "px" : null;
+            content.style.maxHeight = item.classList.contains('active') ? `${content.scrollHeight}px` : null;
         });
     });
     const quantitySelector = document.querySelector('.quantity-selector');
     if (quantitySelector) {
-        const quantityInput = quantitySelector.querySelector('input');
+        const input = quantitySelector.querySelector('input');
         quantitySelector.addEventListener('click', (e) => {
             const action = e.target.dataset.action;
-            let val = parseInt(quantityInput.value);
-            if (action === 'increase' && val < 10) quantityInput.value = val + 1;
-            else if (action === 'decrease' && val > 1) quantityInput.value = val - 1;
+            let val = parseInt(input.value);
+            if (action === 'increase' && val < 10) input.value = val + 1;
+            else if (action === 'decrease' && val > 1) input.value = val - 1;
         });
     }
 }
 
-/* =================================================================== */
-/* ============ INICIALIZACIÓN Y EVENT LISTENERS GLOBALES ============ */
-/* =================================================================== */
+// ===================================================================
+// === INICIALIZACIÓN Y EVENT LISTENERS GLOBALES =====================
+// ===================================================================
+
+function observeAnimatedElements() {
+    const animatedElements = document.querySelectorAll('.animate-on-scroll');
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('is-visible');
+            }
+        });
+    }, { threshold: 0.1 });
+    animatedElements.forEach(element => observer.observe(element));
+}
 
 async function initializeSite() {
     siteProducts = await fetchProductsFromSheets();
@@ -321,53 +362,98 @@ async function initializeSite() {
     renderProductDetail();
     saveAndRenderCart();
     setupGlobalEventListeners();
+    observeAnimatedElements();
 }
 
 function setupGlobalEventListeners() {
     const hamburger = document.querySelector('.hamburger');
     const navLinks = document.querySelector('.nav-links');
+    const searchBtn = document.getElementById('search-btn');
+    const searchOverlay = document.getElementById('search-overlay');
+    const closeSearchBtn = document.getElementById('close-search');
+    const searchInput = document.getElementById('search-input');
+    const cartBtn = document.getElementById('cart-btn');
+    const cartPanel = document.getElementById('cart-panel');
+    const closeCartBtn = document.getElementById('close-cart');
+    const cartItemsContainer = document.getElementById('cart-items');
+    const checkoutBtn = document.querySelector('.checkout-btn');
+    
     if (hamburger && navLinks) {
         hamburger.addEventListener('click', () => {
             hamburger.classList.toggle('active');
             navLinks.classList.toggle('active');
         });
     }
+
     const slides = document.querySelectorAll('.carousel-slide');
     const navContainer = document.querySelector('.carousel-nav');
     if (slides.length > 0 && navContainer) {
         let currentSlide = 0;
+        let slideInterval;
+        const dots = [];
+
         slides.forEach((_, index) => {
             const dot = document.createElement('div');
             dot.classList.add('carousel-dot');
             if (index === 0) dot.classList.add('active');
             dot.addEventListener('click', () => goToSlide(index));
             navContainer.appendChild(dot);
+            dots.push(dot);
         });
-        const dots = document.querySelectorAll('.carousel-dot');
+        
         const goToSlide = (n) => {
             slides[currentSlide].classList.remove('active');
             dots[currentSlide].classList.remove('active');
             currentSlide = (n + slides.length) % slides.length;
             slides[currentSlide].classList.add('active');
             dots[currentSlide].classList.add('active');
+            setCarouselInterval();
         };
-        setInterval(() => goToSlide(currentSlide + 1), 5000);
+        
+        const nextSlide = () => goToSlide(currentSlide + 1);
+
+        const setCarouselInterval = () => {
+            clearInterval(slideInterval);
+            const duration = slides[currentSlide].id === 'video-slide' ? 20000 : 4500;
+            slideInterval = setInterval(nextSlide, duration);
+        };
+        setCarouselInterval();
     }
-    document.getElementById('search-btn')?.addEventListener('click', () => document.getElementById('search-overlay').classList.add('active'));
-    document.getElementById('close-search')?.addEventListener('click', () => document.getElementById('search-overlay').classList.remove('active'));
-    document.getElementById('cart-btn')?.addEventListener('click', () => document.getElementById('cart-panel').classList.add('active'));
-    document.getElementById('close-cart')?.addEventListener('click', () => document.getElementById('cart-panel').classList.remove('active'));
-    document.getElementById('cart-items')?.addEventListener('click', (e) => {
-        const cartItem = e.target.closest('.cart-item');
-        if (!cartItem) return;
-        const id = cartItem.dataset.id;
-        if (e.target.classList.contains('quantity-btn')) updateQuantity(id, e.target.dataset.action === 'increase' ? 1 : -1);
-        if (e.target.classList.contains('remove-item-btn')) updateQuantity(id, 0, true);
-    });
-    document.querySelector('.checkout-btn')?.addEventListener('click', () => {
-        if (cart.length === 0) return alert('Tu carrito está vacío.');
-        createPaymentModal();
-    });
+
+    if(searchBtn && searchOverlay && closeSearchBtn && searchInput) {
+        searchBtn.addEventListener('click', () => searchOverlay.classList.add('active'));
+        closeSearchBtn.addEventListener('click', () => searchOverlay.classList.remove('active'));
+        searchInput.addEventListener('keyup', (e) => {
+            const searchTerm = e.target.value.toLowerCase();
+            document.querySelectorAll('.luxury-product-card').forEach(card => {
+                const productName = card.querySelector('h3').textContent.toLowerCase();
+                card.style.display = productName.includes(searchTerm) ? 'flex' : 'none';
+            });
+        });
+    }
+
+    if (cartBtn && cartPanel && closeCartBtn) {
+        cartBtn.addEventListener('click', () => cartPanel.classList.add('active'));
+        closeCartBtn.addEventListener('click', () => cartPanel.classList.remove('active'));
+    }
+
+    if (cartItemsContainer) {
+        cartItemsContainer.addEventListener('click', (e) => {
+            const cartItem = e.target.closest('.cart-item');
+            if (!cartItem) return;
+            const id = cartItem.dataset.id;
+            if (e.target.classList.contains('quantity-btn')) updateQuantity(id, e.target.dataset.action === 'increase' ? 1 : -1);
+            if (e.target.classList.contains('remove-item-btn')) updateQuantity(id, 0, true);
+        });
+    }
+
+    if (checkoutBtn) {
+        checkoutBtn.addEventListener('click', () => {
+            if (cart.length === 0) return alert('Tu carrito está vacío.');
+            createPaymentModal();
+        });
+    }
+
     const cursor = document.getElementById('custom-cursor');
     const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
     if (cursor && !isTouchDevice) {
@@ -375,10 +461,12 @@ function setupGlobalEventListeners() {
             cursor.style.left = `${e.clientX}px`;
             cursor.style.top = `${e.clientY}px`;
         });
-        document.querySelectorAll('a, button, input, .featured-card, .color-swatch-new, label').forEach(el => {
+        document.querySelectorAll('a, button, input, .featured-card, .color-swatch-new, label, .accordion-header').forEach(el => {
             el.addEventListener('mouseenter', () => cursor.classList.add('grow'));
             el.addEventListener('mouseleave', () => cursor.classList.remove('grow'));
         });
+        document.body.addEventListener('mouseleave', () => cursor.classList.add('hidden'));
+        document.body.addEventListener('mouseenter', () => cursor.classList.remove('hidden'));
     } else if (cursor) {
         cursor.style.display = 'none';
     }
@@ -417,7 +505,7 @@ function createPaymentModal() {
                 </div>
                 <div class="modal-view" id="view-3">
                     <div class="modal-final-step">
-                        <svg class="success-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"></path></svg>
+                        <svg class="success-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"></path></svg>
                         <h4>¡Pedido Copiado!</h4>
                         <p>Estás a un solo paso. Haz clic abajo para enviarnos tu pedido por WhatsApp.</p>
                         <div class="modal-actions"><a href="https://wa.me/573223175541" id="open-whatsapp-btn" class="modal-btn whatsapp" target="_blank">Enviar Pedido por WhatsApp</a></div>
