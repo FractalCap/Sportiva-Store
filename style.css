@@ -552,6 +552,7 @@ h2.section-title::after {
 .cart-item-info { flex-grow: 1; }
 .cart-item-info h4 { font-size: 0.9rem; margin: 0 0 0.5rem 0; font-weight: 500; }
 .cart-item-info .price { color: #8a8a8a; font-size: 0.9rem; margin-bottom: 0.5rem; }
+.cart-item-info .size-info { font-size: 0.85rem; color: #555; } /* Estilo para la talla en el carrito */
 .cart-item-actions { display: flex; align-items: center; gap: 0.8rem; }
 .cart-item-actions .quantity-btn {
     background: none; border: 1px solid var(--border-color);
@@ -678,16 +679,18 @@ h2.section-title::after {
     text-transform: uppercase;
 }
 
-.product-colors-new {
-    margin-bottom: 2rem;
-}
-.product-colors-new p {
+.product-options-label {
     font-size: 0.8rem;
     font-weight: 600;
     margin-bottom: 1rem;
     color: var(--text-color);
     text-transform: uppercase;
     letter-spacing: 0.5px;
+    display: block;
+}
+
+.product-colors-new, .product-sizes-new {
+    margin-bottom: 2rem;
 }
 
 .color-palette-new {
@@ -711,6 +714,67 @@ h2.section-title::after {
 .color-swatch-new.active {
     box-shadow: 0 0 0 2px var(--background-color), 0 0 0 4px var(--primary-color);
 }
+
+/* --- NUEVOS ESTILOS PARA TALLAS Y STOCK --- */
+.size-selector-new {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+}
+
+.size-option-new {
+    position: relative;
+}
+
+.size-option-new input[type="radio"] {
+    display: none;
+}
+
+.size-option-new label {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 48px;
+    height: 48px;
+    padding: 0 1rem;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.size-option-new input[type="radio"]:checked + label {
+    background-color: var(--primary-color);
+    color: var(--background-color);
+    border-color: var(--primary-color);
+}
+
+.size-option-new input[type="radio"]:disabled + label {
+    background-color: #f5f5f5;
+    color: #ccc;
+    cursor: not-allowed;
+    text-decoration: line-through;
+}
+
+.special-order-text-shop {
+    color: var(--accent-color);
+    font-size: 0.8rem;
+    margin-left: 0.5rem;
+    font-weight: 500;
+}
+
+.out-of-stock-message {
+    background-color: #f8d7da;
+    color: #721c24;
+    padding: 1rem;
+    border-radius: 4px;
+    margin-bottom: 1.5rem;
+    text-align: center;
+    font-weight: 500;
+}
+/* --- FIN NUEVOS ESTILOS --- */
+
 
 .product-actions {
     display: flex;
@@ -769,6 +833,11 @@ h2.section-title::after {
 .btn-add-to-cart-new:hover {
     background-color: #333;
 }
+.btn-add-to-cart-new:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+}
+
 
 .shipping-policy-link {
     display: inline-flex;
@@ -1367,6 +1436,23 @@ h2.section-title::after {
     .cart-panel {
         max-width: 100%;
     }
+    
+    /* --- INICIO DE LA SOLUCIÓN: Visibilidad del botón de pago en móvil --- */
+    .cart-footer {
+        padding: 1rem;
+        flex-shrink: 0; /* Asegura que el footer no se encoja */
+        background-color: var(--background-color); /* Fondo sólido para que no sea transparente */
+        box-shadow: 0 -5px 10px -5px rgba(0,0,0,0.1); /* Sombra para separarlo del contenido */
+    }
+    .checkout-btn {
+        padding: 1rem;
+        font-size: 1rem;
+        width: 100%;
+        display: block; /* Asegura que ocupe todo el ancho */
+        border-radius: 8px; /* Esquinas ligeramente redondeadas para un look moderno */
+    }
+    /* --- FIN DE LA SOLUCIÓN --- */
+
     .payment-modal-content {
         padding: 1.5rem 1rem;
     }

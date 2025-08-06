@@ -5,6 +5,8 @@
     --card-bg: #ffffff;
     --input-border: #ced4da;
     --shadow-color: rgba(0, 0, 0, 0.08);
+    --danger-color: #e63946;
+    --special-order-color: #e63946;
 }
 
 /* --- Restaurar Cursor Predeterminado en Admin --- */
@@ -249,12 +251,12 @@ body {
     gap: 1rem;
 }
 
-.colors-editor {
+.colors-editor, .stock-editor {
     margin-top: 1.5rem;
     border-top: 1px solid var(--border-color);
     padding-top: 1.5rem;
 }
-.colors-editor > label {
+.colors-editor > label, .stock-editor > label {
     font-weight: 600;
     font-size: 1rem;
     display: block;
@@ -316,6 +318,51 @@ input[type="color"] {
     border-radius: 50%;
     cursor: pointer;
 }
+
+/* --- NUEVOS ESTILOS PARA STOCK --- */
+.stock-management-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 1.5rem;
+}
+
+.stock-entry {
+    text-align: left;
+}
+
+.stock-entry label {
+    font-weight: 500;
+    font-size: 0.9rem;
+    display: block;
+    margin-bottom: 0.5rem;
+}
+
+.stock-entry .special-order-text {
+    font-size: 0.8rem;
+    color: var(--special-order-color);
+    font-weight: 500;
+    margin-left: 0.5rem;
+}
+
+.stock-entry input {
+    width: 100%;
+    padding: 0.6rem;
+    border-radius: 6px;
+}
+
+#size-management-toggle {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+}
+
+#size-management-toggle label {
+    margin-bottom: 0;
+}
+
+/* --- FIN NUEVOS ESTILOS PARA STOCK --- */
+
 
 .form-actions {
     display: flex;

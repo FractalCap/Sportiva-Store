@@ -14,6 +14,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const modalTitle = document.getElementById('modal-title');
     const colorsContainer = document.getElementById('colors-container');
     const addColorBtn = document.getElementById('add-color-btn');
+    // Nuevos elementos para tallas y stock
+    const hasSizesCheckbox = document.getElementById('has-sizes-checkbox');
+    const stockManagementContainer = document.getElementById('stock-management-container');
 
     // --- ESTADO DE LA APLICACIÓN ---
     let currentProducts = {};
@@ -27,7 +30,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (storedProducts) {
             currentProducts = JSON.parse(storedProducts);
         } else {
-            currentProducts = JSON.parse(JSON.stringify(productsDB));
+            currentProducts = JSON.parse(JSON.stringify(productsDB)); // Fallback a la DB inicial
         }
     };
 
@@ -48,6 +51,13 @@ document.addEventListener('DOMContentLoaded', () => {
             const price = product.wholesalePrice || product.unitPrice || (product.models && product.models.length > 0 ? product.models[0].price : 0);
             const image = product.colors && product.colors.length > 0 ? product.colors[0].image : (product.models && product.models.length > 0 ? product.models[0].image : 'placeholder.jpg');
             
+            // Calcular stock total si el producto tiene tallas
+            let stockInfo = `Categoría: ${product.category || 'Sin categoría'}`;
+            if (product.sizes) {
+                const totalStock = Object.values(product.sizes).reduce((sum, size) => sum + (size.stock || 0), 0);
+                stockInfo = `Stock Total: ${totalStock} unidades`;
+            }
+
             const card = document.createElement('div');
             card.className = 'admin-product-card';
             card.innerHTML = `
@@ -57,7 +67,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div class="info">
                     <h3>${product.name}</h3>
                     <p class="price">${price.toLocaleString('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 })}</p>
-                    <p class="stock">Categoría: ${product.category || 'Sin categoría'}</p>
+                    <p class="stock">${stockInfo}</p>
                     <div class="actions">
                         <button class="btn btn-secondary edit-btn" data-id="${productId}">Editar</button>
                         <button class="btn btn-danger delete-btn" data-id="${productId}">Eliminar</button>
@@ -72,9 +82,33 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // --- LÓGICA DEL MODAL ---
+    const setupStockFields = (sizes = null) => {
+        stockManagementContainer.innerHTML = '';
+        const allSizes = ['S', 'M', 'L', 'XS'];
+        allSizes.forEach(size => {
+            const stockValue = sizes && sizes[size] ? sizes[size].stock : 0;
+            const isSpecialOrder = size === 'L' || size === 'XS';
+            const entry = document.createElement('div');
+            entry.className = 'stock-entry';
+            entry.innerHTML = `
+                <label for="stock-${size}">
+                    Stock Talla ${size}
+                    ${isSpecialOrder ? '<span class="special-order-text">(se trae por encargo)</span>' : ''}
+                </label>
+                <input type="number" id="stock-${size}" data-size="${size}" value="${stockValue}" min="0" class="form-group">
+            `;
+            stockManagementContainer.appendChild(entry);
+        });
+    };
+    
+    hasSizesCheckbox.addEventListener('change', () => {
+        stockManagementContainer.style.display = hasSizesCheckbox.checked ? 'grid' : 'none';
+    });
+
     const openModal = (productId = null) => {
         productForm.reset();
         colorsContainer.innerHTML = '<label>Colores y Fotos</label>';
+        stockManagementContainer.innerHTML = ''; // Limpiar campos de stock
         document.getElementById('product-id').value = productId || '';
 
         if (productId) {
@@ -86,12 +120,25 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('product-description').value = product.description;
             document.getElementById('product-category').value = product.category || 'women';
 
+            // Configurar gestión de tallas
+            if (product.sizes) {
+                hasSizesCheckbox.checked = true;
+                stockManagementContainer.style.display = 'grid';
+                setupStockFields(product.sizes);
+            } else {
+                hasSizesCheckbox.checked = false;
+                stockManagementContainer.style.display = 'none';
+            }
+
             if(product.colors) {
                 product.colors.forEach(color => addColorEntry(color.hex, color.name, color.image));
             }
 
         } else {
             modalTitle.textContent = 'Agregar Nuevo Producto';
+            hasSizesCheckbox.checked = true; // Por defecto activado para nuevos productos
+            stockManagementContainer.style.display = 'grid';
+            setupStockFields(); // Configura campos de stock vacíos
             addColorEntry();
         }
         modal.classList.add('active');
@@ -141,6 +188,16 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
+        let productSizes = null;
+        if (hasSizesCheckbox.checked) {
+            productSizes = {};
+            document.querySelectorAll('#stock-management-container .stock-entry input').forEach(input => {
+                const size = input.dataset.size;
+                const stock = parseInt(input.value, 10) || 0;
+                productSizes[size] = { stock };
+            });
+        }
+
         const updatedProduct = {
             id: idToSave,
             name: document.getElementById('product-name').value,
@@ -149,6 +206,7 @@ document.addEventListener('DOMContentLoaded', () => {
             description: document.getElementById('product-description').value,
             category: document.getElementById('product-category').value,
             colors: colors,
+            sizes: productSizes, // Guardar el objeto de tallas (o null)
             sustainability: "Confeccionado con prácticas sostenibles.",
             productCare: "Lavar a máquina con agua fría."
         };

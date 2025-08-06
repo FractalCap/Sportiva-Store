@@ -39,11 +39,16 @@ function renderCartItems() {
     cart.forEach(item => {
         const cartItemEl = document.createElement('div');
         cartItemEl.classList.add('cart-item');
-        cartItemEl.dataset.id = item.id;
+        cartItemEl.dataset.id = item.id; // El ID único del item en el carrito
+        
+        // Muestra la talla si existe
+        const sizeInfo = item.size ? `<p class="size-info">Talla: ${item.size}</p>` : '';
+
         cartItemEl.innerHTML = `
             <img src="${item.image}" alt="${item.name}" onerror="this.onerror=null;this.src='https://placehold.co/80x80/f0f0f0/333?text=Img';">
             <div class="cart-item-info">
-                <h4>${item.name}</h4>
+                <h4>${item.name.replace(` (Talla: ${item.size})`, '')}</h4>
+                ${sizeInfo}
                 <p class="price">${formatCurrency(item.price)}</p>
                 <div class="cart-item-actions">
                     <button class="quantity-btn" data-action="decrease">-</button>
@@ -87,13 +92,13 @@ function updateQuantity(id, change, isRemoval = false) {
     saveAndRenderCart();
 }
 
-function addToCart(id, name, price, image, quantity = 1) {
+function addToCart(id, name, price, image, quantity = 1, size = null) {
     const existingItem = cart.find(item => item.id === id);
     if (existingItem) {
         existingItem.quantity += quantity;
-        existingItem.price = price;
+        existingItem.price = price; // Actualiza el precio por si acaso
     } else {
-        cart.push({ id, name, price, image, quantity });
+        cart.push({ id, name, price, image, quantity, size });
     }
     saveAndRenderCart();
 }
@@ -102,7 +107,12 @@ function addToCart(id, name, price, image, quantity = 1) {
 function initializeProducts() {
     const storedProducts = localStorage.getItem(DB_KEY);
     if (storedProducts) {
-        siteProducts = JSON.parse(storedProducts);
+        try {
+            siteProducts = JSON.parse(storedProducts);
+        } catch(e) {
+            console.error("Error parsing products from localStorage, falling back to DB file.", e);
+            siteProducts = productsDB;
+        }
     } else {
         siteProducts = productsDB; // Fallback to original DB
     }
@@ -123,7 +133,7 @@ function renderProductGrids() {
 
     // Ensure all grid containers exist before proceeding
     if (!shortsGrid || !yogaGrid || !topsGrid || !legginsGrid || !enterizosGrid || !womenOthersGrid || !menGrid || !discountsGrid) {
-        console.error("One or more product grid containers are missing from the DOM.");
+        // This can happen if the user is not on index.html
         return;
     }
     
@@ -143,20 +153,18 @@ function renderProductGrids() {
         let price = product.unitPrice || (product.models && product.models.length > 0 ? product.models[0].price : 0);
         let image = product.colors && product.colors.length > 0 ? product.colors[0].image : (product.models && product.models.length > 0 ? product.models[0].image : 'placeholder.jpg');
         
-        // --- USER REQUEST: Change the cover image for the "Colección de Enterizos" card ---
         if (product.id === 'enterizos') {
             image = 'Enterizo Betsy 1.jpeg';
         }
 
         let priceHTML = formatCurrency(price);
-        // --- USER REQUEST: Updated logic to show discount price with "Antes" and "Ahora" ---
         if (product.category === 'discount' && product.wholesalePrice && product.wholesalePrice < product.unitPrice) {
             priceHTML = `<span class="old-price">Antes: ${formatCurrency(product.unitPrice)}</span><span class="new-price">Ahora: ${formatCurrency(product.wholesalePrice)}</span>`;
         } else if (product.id === 'enterizos') {
             priceHTML = `Desde ${formatCurrency(price)}`;
         }
         
-        const buttonText = product.id === 'enterizos' ? 'Ver Colección' : 'Ver Colores';
+        const buttonText = (product.id === 'enterizos' || !product.sizes) ? 'Ver Detalles' : 'Ver Colores y Tallas';
         
         const cardHTML = `
             <div class="luxury-product-card animate-on-scroll">
@@ -281,7 +289,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const searchTerm = e.target.value.toLowerCase();
             document.querySelectorAll('.luxury-product-card').forEach(card => {
                 const productName = card.querySelector('h3').textContent.toLowerCase();
-                card.style.display = productName.includes(searchTerm) ? 'block' : 'none';
+                card.style.display = productName.includes(searchTerm) ? 'flex' : 'none';
             });
         });
     }
@@ -400,6 +408,7 @@ document.addEventListener('DOMContentLoaded', () => {
             cart.forEach(item => {
                 const itemTotal = item.price * item.quantity;
                 total += itemTotal;
+                // El nombre del item ya incluye la talla, así que se agrega directamente
                 message += `- *${item.quantity}x* ${item.name} (${formatCurrency(item.price)} c/u)\n`;
             });
             message += `\n*Total del Pedido:* ${formatCurrency(total)}\n`;
@@ -438,7 +447,7 @@ document.addEventListener('DOMContentLoaded', () => {
             cursor.style.top = e.clientY + 'px';
         });
 
-        const interactiveElements = document.querySelectorAll('a, button, .featured-card, .color-swatch-new, .quantity-btn, .remove-item-btn, .payment-option label, input, .accordion-header');
+        const interactiveElements = document.querySelectorAll('a, button, .featured-card, .color-swatch-new, .quantity-btn, .remove-item-btn, .payment-option label, input, .accordion-header, .size-option-new label');
         interactiveElements.forEach(el => {
             el.addEventListener('mouseenter', () => cursor.classList.add('grow'));
             el.addEventListener('mouseleave', () => cursor.classList.remove('grow'));

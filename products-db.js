@@ -1,7 +1,7 @@
 /**
  * products-db.js
  * Base de datos simulada para todos los productos de la tienda Sportiva Store.
- * NOTA: Se ha añadido el campo 'category' a cada producto.
+ * NOTA: Se ha añadido el campo 'category' y un objeto 'sizes' para gestionar el stock por talla.
  * Esta base de datos sirve como punto de partida si el almacenamiento local está vacío.
  */
 
@@ -13,6 +13,13 @@ const productsDB = {
         id: 'enterizos',
         name: 'Colección de Enterizos',
         category: 'women',
+        // Se añade estructura de tallas a la colección general de enterizos
+        sizes: {
+            S: { stock: 10 },
+            M: { stock: 10 },
+            L: { stock: 0 },
+            XS: { stock: 0 }
+        },
         models: [
             { id: 'enterizo-julia-negro', name: 'Enterizo Julia Negro', price: 79900, image: 'Enterizo Julia negro.jpeg', description: 'Un diseño elegante y cómodo, perfecto para destacar con estilo y confort.' },
             { id: 'enterizo-julia-azul', name: 'Enterizo Julia Azul', price: 79900, image: 'Enterizo Julia azul.jpeg', description: 'El clásico diseño Julia en un vibrante tono azul que resalta tu figura.' },
@@ -66,6 +73,12 @@ const productsDB = {
         unitPrice: 50000,
         wholesalePrice: null,
         description: "Diseñados para realzar tu figura, estos leggings con efecto push-up te brindan comodidad y estilo en cada movimiento.",
+        sizes: {
+            S: { stock: 15 },
+            M: { stock: 15 },
+            L: { stock: 0 },
+            XS: { stock: 0 }
+        },
         colors: [
             { name: 'Verde Océano Claro', hex: '#5E8B7E', image: 'Leggings-Unicolor-Con-Push-Up-Verde-oceano-claro.jpeg' },
             { name: 'Azul Celeste Intenso', hex: '#4A90E2', image: 'Leggings-Unicolor-Con-Push-Up-Celeste-Intenso.jpeg' },
@@ -94,6 +107,12 @@ const productsDB = {
         unitPrice: 40000,
         wholesalePrice: null,
         description: "El short deportivo clásico que no puede faltar en tu armario. Comodidad y libertad de movimiento garantizadas.",
+        sizes: {
+            S: { stock: 20 },
+            M: { stock: 20 },
+            L: { stock: 0 },
+            XS: { stock: 0 }
+        },
         colors: [
             { name: 'Azul Agua Marina', hex: '#008080', image: '1 short azul agua marina.jpg' },
             { name: 'Azul Piscina', hex: '#0077be', image: '1 short azul Geo piscina.jpg' },
@@ -120,6 +139,12 @@ const productsDB = {
         unitPrice: 40000,
         wholesalePrice: 35000,
         description: "Atrévete con el estilo tie-dye. Cada short tiene un diseño único e irrepetible. ¡Lleva 2 o más por $35.000 cada uno!",
+        sizes: {
+            S: { stock: 10 },
+            M: { stock: 10 },
+            L: { stock: 0 },
+            XS: { stock: 0 }
+        },
         colors: [
             { name: 'Azul Royal y Blanco', hex: '#4169E1', image: '2 short Tie-dye azul royal y blanco.jpg' },
             { name: 'Marmolado Blanco y Gris', hex: '#B0B0B0', image: '2 Short Marmoleado gris carbón sobre blanco hueso.jpg' },
@@ -148,6 +173,7 @@ const productsDB = {
         unitPrice: 69900,
         wholesalePrice: null,
         description: "Chaqueta ligera y elástica con un diseño de líneas que estiliza tu figura. Perfecta para antes y después de tu práctica de yoga.",
+        sizes: null, // No aplica tallas
         colors: [
             { name: 'Negro', hex: '#000000', image: 'Yoga Jacket lineas negro.jpg' },
             { name: 'Blanco', hex: '#FFFFFF', image: 'Yoga Jacket lineas blanco.jpg' },
@@ -163,6 +189,7 @@ const productsDB = {
         unitPrice: 69900,
         wholesalePrice: null,
         description: "La chaqueta de yoga clásica que combina con todo. Su tejido suave y transpirable te mantiene cómoda en todo momento.",
+        sizes: null, // No aplica tallas
         colors: [
             { name: 'Verde Oscuro', hex: '#5a6e45', image: 'Yoga Jacket Clasica verde oscuro.jpg' },
             { name: 'Azul Oscuro', hex: '#4a5a7e', image: 'Yoga Jacket Clasica azul oscuro.jpg' },
@@ -181,6 +208,12 @@ const productsDB = {
         unitPrice: 32900,
         wholesalePrice: null,
         description: "Diseño moderno con tiras cruzadas que ofrece un soporte ligero y un estilo único.",
+        sizes: {
+            S: { stock: 12 },
+            M: { stock: 12 },
+            L: { stock: 0 },
+            XS: { stock: 0 }
+        },
         colors: [
             { name: 'Blanco', hex: '#FFFFFF', image: 'Top cruzado.jpg' },
             { name: 'Negro', hex: '#000000', image: 'Top cruzado.jpg' },
@@ -196,6 +229,12 @@ const productsDB = {
         unitPrice: 38900,
         wholesalePrice: null,
         description: "Un top deportivo con un detalle de tres tiras en la espalda para un look llamativo y ventilación adicional.",
+        sizes: {
+            S: { stock: 10 },
+            M: { stock: 10 },
+            L: { stock: 0 },
+            XS: { stock: 0 }
+        },
         colors: [
             { name: 'Fucsia', hex: '#FF00FF', image: '3 tiras.jpg' },
             { name: 'Blanco', hex: '#FFFFFF', image: '3 tiras.jpg' },
@@ -211,6 +250,12 @@ const productsDB = {
         unitPrice: 32900,
         wholesalePrice: null,
         description: "Versión mejorada del top cruzado, con mayor soporte y un ajuste perfecto para actividades de alto impacto.",
+        sizes: {
+            S: { stock: 15 },
+            M: { stock: 15 },
+            L: { stock: 0 },
+            XS: { stock: 0 }
+        },
         colors: [
             { name: 'Terracota', hex: '#B45F50', image: 'Top Cruzado B2.jpg' },
             { name: 'Negro', hex: '#000000', image: 'Top Cruzado B2.jpg' },
@@ -227,6 +272,12 @@ const productsDB = {
         unitPrice: 38900,
         wholesalePrice: null,
         description: "Un top de diseño femenino y delicado, con un ajuste cómodo que te permite moverte con total libertad.",
+        sizes: {
+            S: { stock: 8 },
+            M: { stock: 8 },
+            L: { stock: 0 },
+            XS: { stock: 0 }
+        },
         colors: [
             { name: 'Rosado', hex: '#FFC0CB', image: 'Top Bea Rosado.jpeg' },
             { name: 'Negro', hex: '#000000', image: 'Top Bea Negro.jpeg' },
@@ -243,6 +294,12 @@ const productsDB = {
         unitPrice: 30000,
         wholesalePrice: null,
         description: "El básico esencial. Un top simple, cómodo y versátil que combina con todo.",
+        sizes: {
+            S: { stock: 20 },
+            M: { stock: 20 },
+            L: { stock: 0 },
+            XS: { stock: 0 }
+        },
         colors: [
             { name: 'Verde', hex: '#008000', image: 'Top sencillo Verde.jpeg' },
             { name: 'Rosado', hex: '#ff9be9ff', image: 'Top sencillo Rosado.jpeg' }
@@ -257,6 +314,12 @@ const productsDB = {
         unitPrice: 29900,
         wholesalePrice: null,
         description: "Un diseño asimétrico y moderno que te hará destacar. Ideal para yoga, pilates o un look casual.",
+        sizes: {
+            S: { stock: 5 },
+            M: { stock: 5 },
+            L: { stock: 0 },
+            XS: { stock: 0 }
+        },
         colors: [
             { name: 'Rosado', hex: '#ffc5feff', image: 'Top un hombro.jpeg' },
         ],
@@ -270,6 +333,12 @@ const productsDB = {
         unitPrice: 33900,
         wholesalePrice: null,
         description: "Elegante y funcional, este top presenta un corte en forma de gota en el escote para un toque de estilo.",
+        sizes: {
+            S: { stock: 10 },
+            M: { stock: 10 },
+            L: { stock: 0 },
+            XS: { stock: 0 }
+        },
         colors: [
             { name: 'Azul', hex: '#7a7affff', image: 'Top gota azul.jpeg' },
             { name: 'Rojo', hex: '#ff3b3bff', image: 'Top gota rojo.jpeg' }
@@ -284,6 +353,12 @@ const productsDB = {
         unitPrice: 38900,
         wholesalePrice: null,
         description: "Un diseño coqueto y funcional con un detalle cruzado en la espalda que simula un beso.",
+        sizes: {
+            S: { stock: 10 },
+            M: { stock: 10 },
+            L: { stock: 0 },
+            XS: { stock: 0 }
+        },
         colors: [
             { name: 'Marrón', hex: '#995c07ff', image: 'Top kiss marron.jpeg' },
             { name: 'Rosa', hex: '#ff6e97ff', image: 'Top kiss rosa.jpeg' }
@@ -298,6 +373,12 @@ const productsDB = {
         unitPrice: 29900,
         wholesalePrice: null,
         description: "Detalle fruncido en el centro para un ajuste personalizable y un look favorecedor.",
+        sizes: {
+            S: { stock: 12 },
+            M: { stock: 12 },
+            L: { stock: 0 },
+            XS: { stock: 0 }
+        },
         colors: [
             { name: 'Negro', hex: '#000000', image: 'Top Fruncido Negro.jpeg' },
         ],
@@ -311,6 +392,12 @@ const productsDB = {
         unitPrice: 32900,
         wholesalePrice: null,
         description: "El top de tirantes clásico, rediseñado con un tejido de mayor calidad y un ajuste mejorado.",
+        sizes: {
+            S: { stock: 15 },
+            M: { stock: 15 },
+            L: { stock: 0 },
+            XS: { stock: 0 }
+        },
         colors: [
             { name: 'Marrón', hex: '#612d01ff', image: 'Top Convencional Marron.jpeg' },
             { name: 'Gris', hex: '#808080', image: 'Top Convencional Gris.jpeg' }
@@ -325,6 +412,12 @@ const productsDB = {
         unitPrice: 65900,
         wholesalePrice: null,
         description: "Un estilo retro que vuelve con fuerza. Este pantalón bota campana estiliza la figura y te da un look único y a la moda.",
+        sizes: {
+            S: { stock: 10 },
+            M: { stock: 10 },
+            L: { stock: 0 },
+            XS: { stock: 0 }
+        },
         colors: [
             { name: 'Marrón', hex: '#8B4513', image: 'Pantalon Bota Campana marron.jpeg' },
             { name: 'Rosa', hex: '#FFC0CB', image: 'Pantalon Bota Campana rosa.jpeg' },
@@ -342,6 +435,12 @@ const productsDB = {
         unitPrice: 89900,
         wholesalePrice: null,
         description: "La combinación perfecta de estilo y rendimiento. Este conjunto premium está diseñado para ofrecerte la máxima comodidad y un look impecable.",
+        sizes: {
+            S: { stock: 8 },
+            M: { stock: 8 },
+            L: { stock: 0 },
+            XS: { stock: 0 }
+        },
         colors: [
             { name: 'Rojo', hex: '#ff0000ff', image: 'Conjunto Premium Rojo.jpeg' },
             { name: 'Negro', hex: '#000000', image: 'Conjunto Premium Negro.jpeg' },
@@ -357,6 +456,12 @@ const productsDB = {
         unitPrice: 79900,
         wholesalePrice: null,
         description: "Siente la suavidad y el ajuste perfecto del tejido rib. Este conjunto es ideal tanto para tus entrenamientos como para un look casual y moderno.",
+        sizes: {
+            S: { stock: 10 },
+            M: { stock: 10 },
+            L: { stock: 0 },
+            XS: { stock: 0 }
+        },
         colors: [
             { name: 'Blanco', hex: '#ffffffff', image: 'Conjunto Rib Blanco.jpeg' },
             { name: 'Rojo', hex: '#ff0000ff', image: 'Conjunto Rib Rojo.jpeg' },
@@ -371,6 +476,12 @@ const productsDB = {
         unitPrice: 39900,
         wholesalePrice: null,
         description: "Diseñada para ofrecer soporte y estilizar la figura, nuestra blusa compresiva es ideal para entrenamientos de alta intensidad. Su tejido transpirable se adapta a tu cuerpo como una segunda piel.",
+        sizes: {
+            S: { stock: 15 },
+            M: { stock: 15 },
+            L: { stock: 0 },
+            XS: { stock: 0 }
+        },
         colors: [
             { name: 'Blanco', hex: '#FFFFFF', image: 'Blusa Compresiva Blanco.jpeg' },
             { name: 'Negro', hex: '#000000', image: 'Blusa Compresiva Negro.jpeg' },
@@ -388,6 +499,7 @@ const productsDB = {
         unitPrice: 72900,
         wholesalePrice: null,
         description: "Perfecta para entrenar al aire libre, esta chaqueta licrada te ofrece libertad de movimiento y protección ligera. Su tejido elástico se ajusta a tu cuerpo para máximo confort.",
+        sizes: null, // No aplica tallas
         colors: [
             { name: 'Azul', hex: '#1d3557', image: 'Chaqueta Licrada Hombre azul.jpeg' },
             { name: 'Blanco', hex: '#FFFFFF', image: 'Chaqueta Licrada Hombre blanco.jpeg' }
@@ -402,6 +514,12 @@ const productsDB = {
         unitPrice: 39900,
         wholesalePrice: null,
         description: "El esqueleto esencial para tus rutinas más exigentes. Su tejido licrado y transpirable mantiene la frescura mientras entrenas, ofreciendo un ajuste atlético.",
+        sizes: {
+            S: { stock: 15 },
+            M: { stock: 15 },
+            L: { stock: 0 },
+            XS: { stock: 0 }
+        },
         colors: [
             { name: 'Blanco', hex: '#FFFFFF', image: 'Esqueleto Licrado Hombre.jpeg' },
             { name: 'Gris', hex: '#808080', image: 'Esqueleto Licrado Hombre.jpeg' },
@@ -417,6 +535,12 @@ const productsDB = {
         unitPrice: 40000,
         wholesalePrice: null,
         description: "Comodidad y estilo se unen en estos pantalones deportivos. Ideales para el gimnasio o para un look casual y relajado. Cuentan con bolsillos prácticos y un ajuste moderno.",
+        sizes: {
+            S: { stock: 10 },
+            M: { stock: 10 },
+            L: { stock: 0 },
+            XS: { stock: 0 }
+        },
         colors: [
             { name: 'Azul Oscuro', hex: '#00008B', image: 'Pantalones Hombres.jpeg' },
             { name: 'Gris', hex: '#808080', image: 'Pantalones Hombres.jpeg' },
@@ -432,6 +556,12 @@ const productsDB = {
         unitPrice: 39900,
         wholesalePrice: null,
         description: "Un estilo urbano y funcional. Este esqueleto con capota es perfecto para un look moderno en el gimnasio o en la calle. Tejido ligero y de secado rápido.",
+        sizes: {
+            S: { stock: 12 },
+            M: { stock: 12 },
+            L: { stock: 0 },
+            XS: { stock: 0 }
+        },
         colors: [
             { name: 'Blanco', hex: '#FFFFFF', image: 'Esqueleto con Capota.jpeg' }
         ],
@@ -445,6 +575,12 @@ const productsDB = {
         unitPrice: 39900,
         wholesalePrice: null,
         description: "Para los que entrenan sin límites. El esqueleto 'Harder' tiene un corte atlético y un diseño audaz que te motiva a darlo todo en cada repetición.",
+        sizes: {
+            S: { stock: 10 },
+            M: { stock: 10 },
+            L: { stock: 0 },
+            XS: { stock: 0 }
+        },
         colors: [
             { name: 'Beige', hex: '#F5F5DC', image: 'Esqueleto Harder.jpeg' }
         ],
@@ -458,6 +594,12 @@ const productsDB = {
         unitPrice: 64900,
         wholesalePrice: null,
         description: "Lleva tu estilo urbano al siguiente nivel con nuestro conjunto oversize. La combinación perfecta de comodidad y tendencia, ideal para un look relajado y moderno tanto dentro como fuera del gimnasio.",
+        sizes: {
+            S: { stock: 10 },
+            M: { stock: 10 },
+            L: { stock: 0 },
+            XS: { stock: 0 }
+        },
         colors: [
             { name: 'Blanco', hex: '#FFFFFF', image: 'Conjunto Oversize Esqueleto Hombre Blanco.jpeg' },
             { name: 'Gris', hex: '#A9A9A9', image: 'Conjunto Oversize Esqueleto Hombre Gris.jpeg' },
@@ -478,6 +620,7 @@ const productsDB = {
         unitPrice: 35000,
         wholesalePrice: 20000,
         description: "¡Oferta especial! Un enterizo de licra cómodo y versátil, perfecto para tus entrenamientos.",
+        sizes: null, // No aplica tallas
         colors: [
             { name: 'Palo de Rosa', hex: '#E0B4B4', image: 'Enterizo Licra Descuento.jpeg' },
             { name: 'Gris', hex: '#808080', image: 'Enterizo Licra Descuento.jpeg' }
@@ -492,6 +635,7 @@ const productsDB = {
         unitPrice: 26000,
         wholesalePrice: 20000,
         description: "Una blusa tipo polo elegante y deportiva a un precio increíble. ¡Aprovecha la oferta!",
+        sizes: null, // No aplica tallas
         colors: [
             { name: 'Blanco', hex: '#FFFFFF', image: 'Blusa Polo.jpeg' },
             { name: 'Negro', hex: '#000000', image: 'Blusa Polo.jpeg' },
@@ -511,6 +655,7 @@ const productsDB = {
         unitPrice: 28000,
         wholesalePrice: 22000,
         description: "¡En oferta! Pantaloneta unicolor 'Era', ligera y versátil para cualquier rutina de ejercicio.",
+        sizes: null, // No aplica tallas
         colors: [
             { name: 'Negro', hex: '#000000', image: 'Pantalon Era.jpeg' },
             { name: 'Rosado', hex: '#ff219fff', image: 'Pantalon Era.jpeg' },
@@ -527,6 +672,7 @@ const productsDB = {
         unitPrice: 32000,
         wholesalePrice: 25000,
         description: "Busos tipo polo cómodos y con estilo, ahora con un descuento especial. ¡No te quedes sin el tuyo!",
+        sizes: null, // No aplica tallas
         colors: [
             { name: 'Blanco', hex: '#FFFFFF', image: 'Buzos Polo.jpeg' },
             { name: 'Negro', hex: '#000000', image: 'Buzos Polo.jpeg' },
@@ -546,6 +692,7 @@ const productsDB = {
         unitPrice: 35000,
         wholesalePrice: 20000,
         description: "Confeccionados en tela suplex de alta calidad, estos leggins sin push up ofrecen un ajuste perfecto y comodidad superior. ¡Ahora en oferta!",
+        sizes: null, // No aplica tallas
         colors: [
             { name: 'Morado', hex: '#6A0DAD', image: 'Leggins Suplex Morado sin push up descuento.jpeg' },
             { name: 'Azul Oscuro', hex: '#00008B', image: 'Leggins Suplex Azul Oscuro sin push up descuento.jpeg' },
@@ -564,6 +711,7 @@ const productsDB = {
         unitPrice: 30000,
         wholesalePrice: 19900,
         description: "Comodidad y un efecto realzador en este short push up. ¡Aprovecha la oferta!",
+        sizes: null, // No aplica tallas
         colors: [
             { name: 'Negro', hex: '#000000', image: 'Short PushUp Negro Descuento.jpeg' },
             { name: 'Negro Intenso', hex: '#1C1C1C', image: 'Short PushUp Negro Intenso Descuento.jpeg' },
@@ -582,6 +730,7 @@ const productsDB = {
         unitPrice: 50000,
         wholesalePrice: 29900,
         description: "Los leggings básicos que no pueden faltar en tu clóset, ahora con un precio especial. Disponibles en varios colores.",
+        sizes: null, // No aplica tallas
         colors: [
             { name: 'Rosa', hex: '#FFC0CB', image: 'Leggins PushUp Rosa Descuento.jpeg' },
             { name: 'Fucsia', hex: '#FF00FF', image: 'Leggins PushUp Rosa Intenso Descuento.jpeg' },
@@ -597,6 +746,7 @@ const productsDB = {
         unitPrice: 38000,
         wholesalePrice: 25000,
         description: "Máxima comodidad para tus días de descanso o entrenamientos ligeros. ¡No te pierdas esta oferta!",
+        sizes: null, // No aplica tallas
         colors: [
             { name: 'Morado', hex: '#9370DB', image: 'Pantalon sudadera morado.jpeg' },
             { name: 'Azul', hex: '#699cd0ff', image: 'Pantalon Sudadera Azul.jpeg' },
@@ -612,6 +762,7 @@ const productsDB = {
         unitPrice: 25000,
         wholesalePrice: 15900,
         description: "El accesorio ideal para llevar todo lo que necesitas al gimnasio. Espacioso, práctico y ahora en descuento.",
+        sizes: null, // No aplica tallas
         colors: [
             { name: 'Gris', hex: '#808080', image: 'Maleta Toto Gris.jpeg' },
             { name: 'Rosa', hex: '#FFC0CB', image: 'Maleta Toto Rosa Piel.jpeg' },

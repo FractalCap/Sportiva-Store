@@ -104,6 +104,17 @@
                     <textarea id="product-description" rows="3" placeholder="Una breve descripción del producto." required></textarea>
                 </div>
 
+                <!-- Contenedor para la gestión de tallas y stock -->
+                <div class="stock-editor">
+                    <div id="size-management-toggle">
+                        <input type="checkbox" id="has-sizes-checkbox">
+                        <label for="has-sizes-checkbox">¿Este producto tiene tallas?</label>
+                    </div>
+                    <div id="stock-management-container" class="stock-management-container" style="display: none;">
+                         <!-- Los campos de stock por talla se agregarán aquí dinámicamente -->
+                    </div>
+                </div>
+
                 <div id="colors-container" class="colors-editor">
                     <label>Colores y Fotos</label>
                     <!-- Los campos de colores se agregarán aquí dinámicamente -->

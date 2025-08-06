@@ -123,6 +123,7 @@
         <a href="index.html" class="back-to-shop-link">← Volver a la Tienda</a>
         
         <div class="product-detail-main" id="product-detail-main">
+            <!-- El contenido del producto se cargará aquí dinámicamente -->
             <div class="product-detail-loading">
                 <h2>Cargando producto...</h2>
             </div>
@@ -184,13 +185,12 @@
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             const productDetailContainer = document.getElementById('product-detail-main');
-            const combinaConContainer = document.getElementById('combina-con-container');
             const params = new URLSearchParams(window.location.search);
             const productId = params.get('product');
 
-            if (typeof siteProducts === 'undefined') {
-                productDetailContainer.innerHTML = `<div class="product-not-found"><h2>Error al cargar la base de datos de productos.</h2><a href="index.html" class="btn">Volver a la tienda</a></div>`;
-                return;
+            // La función initializeProducts() de script.js ya debería haber sido llamada
+            if (typeof siteProducts === 'undefined' || Object.keys(siteProducts).length === 0) {
+                 initializeProducts(); // Llamada de respaldo por si acaso
             }
 
             const product = siteProducts[productId];
@@ -199,123 +199,118 @@
                 productDetailContainer.innerHTML = `<div class="product-not-found"><h2>Lo sentimos, producto no encontrado.</h2><a href="index.html" class="btn">Volver a la tienda</a></div>`;
                 return;
             }
+            
+            document.title = `${product.name} - Sportiva Store`;
 
-            if (productId === 'enterizos') {
-                document.title = 'Colección de Enterizos - Sportiva Store';
-                let currentModel = product.models[0];
-
-                const renderModelDetails = (model) => {
-                    document.querySelector('.product-detail-title').textContent = model.name;
-                    document.querySelector('.product-pricing-new').innerHTML = `<span class="current-price single-price">$${model.price.toLocaleString('es-CO')}</span>`;
-                    document.querySelector('.product-description-section p').innerHTML = `<strong>Descripción:</strong> ${model.description}`;
-                    
-                    const productImage = document.getElementById('product-detail-image');
-                    productImage.classList.add('image-fade-out');
-                    setTimeout(() => {
-                        productImage.src = model.image;
-                        productImage.alt = model.name;
-                        productImage.onerror = () => { productImage.src = `https://placehold.co/600x800/f0f0f0/333?text=${encodeURIComponent(model.name)}`; };
-                        productImage.classList.remove('image-fade-out');
-                    }, 400);
-                };
-
-                productDetailContainer.innerHTML = `
-                    <div class="product-detail-image-wrapper">
-                        <img src="${currentModel.image}" alt="${currentModel.name}" id="product-detail-image" onerror="this.onerror=null;this.src='https://placehold.co/600x800/f0f0f0/333?text=${encodeURIComponent(currentModel.name)}';">
-                    </div>
-                    <div class="product-detail-info">
-                        <h1 class="product-detail-title">${currentModel.name}</h1>
-                        <div class="product-pricing-new">
-                             <span class="current-price single-price">$${currentModel.price.toLocaleString('es-CO')}</span>
-                        </div>
-                        <div class="product-colors-new">
-                            <p>MODELO: <span id="selected-color-name">${product.colors[0].name}</span></p>
-                            <div class="color-palette-new" id="color-palette-container"></div>
-                        </div>
-                        <div class="product-actions">
-                            <div class="quantity-selector">
-                                <button class="quantity-btn" data-action="decrease">-</button>
-                                <input type="number" id="quantity-input" value="1" min="1" max="10" readonly>
-                                <button class="quantity-btn" data-action="increase">+</button>
-                            </div>
-                            <button class="btn-add-to-cart-new">Agregar al Carrito</button>
-                        </div>
-                        <div class="product-description-section"><p><strong>Descripción:</strong> ${currentModel.description}</p></div>
-                        <div class="product-accordion">
-                            <div class="accordion-item"><button class="accordion-header">Sostenibilidad<span class="accordion-icon">+</span></button><div class="accordion-content"><p>${product.sustainability}</p></div></div>
-                            <div class="accordion-item"><button class="accordion-header">Cuidado del Producto<span class="accordion-icon">+</span></button><div class="accordion-content"><p>${product.productCare}</p></div></div>
-                        </div>
-                    </div>`;
-
-                const paletteContainer = document.getElementById('color-palette-container');
-                const selectedModelNameSpan = document.getElementById('selected-color-name');
-
-                product.colors.forEach((selector, index) => {
-                    const swatch = document.createElement('span');
-                    swatch.className = 'color-swatch-new';
-                    swatch.style.backgroundColor = selector.hex;
-                    swatch.title = selector.name;
-                    if (index === 0) swatch.classList.add('active');
-
-                    swatch.addEventListener('click', () => {
-                        const selectedModel = product.models.find(m => m.id === selector.modelId);
-                        if (!selectedModel || currentModel.id === selectedModel.id) return;
-                        
-                        currentModel = selectedModel;
-                        renderModelDetails(currentModel);
-                        
-                        selectedModelNameSpan.textContent = selector.name;
-                        document.querySelector('.color-swatch-new.active').classList.remove('active');
-                        swatch.classList.add('active');
-                    });
-                    paletteContainer.appendChild(swatch);
-                });
-
-                document.querySelector('.btn-add-to-cart-new').addEventListener('click', () => {
-                    const quantity = parseInt(document.getElementById('quantity-input').value);
-                    addToCart(currentModel.id, currentModel.name, currentModel.price, currentModel.image, quantity);
-                    document.getElementById('cart-panel').classList.add('active');
-                });
-
-            } else {
-                document.title = `${product.name} - Sportiva Store`;
+            // --- Lógica para renderizar el producto ---
+            const renderProduct = () => {
                 let selectedColor = product.colors[0];
                 let priceHTML = '';
+                let totalStock = 0;
 
-                // Updated logic to show discount price
+                // Calcula el stock total solo si el producto maneja tallas
+                if (product.sizes) {
+                    totalStock = Object.values(product.sizes).reduce((sum, size) => sum + (size.stock || 0), 0);
+                }
+
+                // Determina el precio a mostrar
                 if (product.category === 'discount' && product.wholesalePrice && product.wholesalePrice < product.unitPrice) {
                     const discount = Math.round((1 - (product.wholesalePrice / product.unitPrice)) * 100);
                     priceHTML = `<span class="old-price">$${product.unitPrice.toLocaleString('es-CO')}</span><span class="current-price">$${product.wholesalePrice.toLocaleString('es-CO')}</span><span class="save-badge">AHORRA ${discount}%</span>`;
                 } else {
-                    priceHTML = `<span class="current-price single-price">$${product.unitPrice.toLocaleString('es-CO')}</span>`;
+                    const price = product.unitPrice || (product.models ? product.models[0].price : 0);
+                    priceHTML = `<span class="current-price single-price">$${price.toLocaleString('es-CO')}</span>`;
                 }
-                
+
+                const initialImage = product.colors[0].image || 'placeholder.jpg';
+
+                // Construye el HTML del detalle del producto
                 productDetailContainer.innerHTML = `
                     <div class="product-detail-image-wrapper">
-                        <img src="${product.colors[0].image}" alt="${product.name}" id="product-detail-image" onerror="this.onerror=null;this.src='https://placehold.co/600x800/f0f0f0/333?text=${encodeURIComponent(product.name)}';">
+                        <img src="${initialImage}" alt="${product.name}" id="product-detail-image" onerror="this.onerror=null;this.src='https://placehold.co/600x800/f0f0f0/333?text=${encodeURIComponent(product.name)}';">
                     </div>
                     <div class="product-detail-info">
                         <h1 class="product-detail-title">${product.name}</h1>
                         <div class="product-pricing-new">${priceHTML}</div>
+                        <div id="out-of-stock-container"></div>
+                        
                         <div class="product-colors-new">
-                            <p>COLOR: <span id="selected-color-name">${product.colors[0].name}</span></p>
+                            <p class="product-options-label">COLOR: <span id="selected-color-name">${product.colors[0].name}</span></p>
                             <div class="color-palette-new" id="color-palette-container"></div>
                         </div>
+
+                        <div id="size-selector-container"></div>
+
                         <div class="product-actions">
                             <div class="quantity-selector">
                                 <button class="quantity-btn" data-action="decrease">-</button>
                                 <input type="number" id="quantity-input" value="1" min="1" max="10" readonly>
                                 <button class="quantity-btn" data-action="increase">+</button>
                             </div>
-                            <button class="btn-add-to-cart-new">Agregar al Carrito</button>
+                            <button class="btn-add-to-cart-new" id="add-to-cart-btn">Agregar al Carrito</button>
                         </div>
                         <div class="product-description-section"><p><strong>Descripción:</strong> ${product.description}</p></div>
                         <div class="product-accordion">
-                            <div class="accordion-item"><button class="accordion-header">Sostenibilidad<span class="accordion-icon">+</span></button><div class="accordion-content"><p>${product.sustainability}</p></div></div>
-                            <div class="accordion-item"><button class="accordion-header">Cuidado del Producto<span class="accordion-icon">+</span></button><div class="accordion-content"><p>${product.productCare}</p></div></div>
+                            <div class="accordion-item"><button class="accordion-header">Sostenibilidad<span class="accordion-icon">+</span></button><div class="accordion-content"><p>${product.sustainability || 'Info no disponible.'}</p></div></div>
+                            <div class="accordion-item"><button class="accordion-header">Cuidado del Producto<span class="accordion-icon">+</span></button><div class="accordion-content"><p>${product.productCare || 'Info no disponible.'}</p></div></div>
                         </div>
                     </div>`;
+
+                const addToCartBtn = document.getElementById('add-to-cart-btn');
+
+                // Renderizar selector de tallas si el producto tiene la propiedad 'sizes'
+                if (product.sizes) {
+                    const sizeContainer = document.getElementById('size-selector-container');
+                    const sizeOrder = ['XS', 'S', 'M', 'L'];
+                    let sizeSelectorHTML = `
+                        <div class="product-sizes-new">
+                            <p class="product-options-label">TALLA:</p>
+                            <div class="size-selector-new" id="size-selector">`;
+                    
+                    sizeOrder.forEach(size => {
+                        if (product.sizes[size]) {
+                            const stock = product.sizes[size].stock;
+                            const isSpecialOrder = size === 'XS' || size === 'L';
+                            const isDisabled = stock === 0 && !isSpecialOrder;
+                            
+                            sizeSelectorHTML += `
+                                <div class="size-option-new">
+                                    <input type="radio" id="size-${size}" name="product-size" value="${size}" ${isDisabled ? 'disabled' : ''}>
+                                    <label for="size-${size}">
+                                        ${size}
+                                        ${isSpecialOrder ? '<span class="special-order-text-shop">(por encargo)</span>' : ''}
+                                    </label>
+                                </div>`;
+                        }
+                    });
+                    sizeSelectorHTML += `</div></div>`;
+                    sizeContainer.innerHTML = sizeSelectorHTML;
+                }
+
+                // Función para actualizar estado del botón y mensaje de stock
+                const updateStockStatus = () => {
+                    const outOfStockContainer = document.getElementById('out-of-stock-container');
+                    const quantitySelector = document.querySelector('.quantity-selector');
+                    
+                    // Si el producto maneja tallas y el stock total es 0, se considera agotado.
+                    if (product.sizes && totalStock === 0) {
+                        outOfStockContainer.innerHTML = `<div class="out-of-stock-message">Producto Agotado</div>`;
+                        addToCartBtn.disabled = true;
+                        if (quantitySelector) {
+                            quantitySelector.style.display = 'none';
+                        }
+                    } else {
+                        outOfStockContainer.innerHTML = '';
+                        addToCartBtn.disabled = false;
+                        if (quantitySelector) {
+                            quantitySelector.style.display = 'flex';
+                        }
+                    }
+                };
                 
+                updateStockStatus();
+
+                // Lógica de selectores de color
                 const paletteContainer = document.getElementById('color-palette-container');
                 const productImage = document.getElementById('product-detail-image');
                 const selectedColorName = document.getElementById('selected-color-name');
@@ -345,17 +340,40 @@
                     paletteContainer.appendChild(swatch);
                 });
 
-                document.querySelector('.btn-add-to-cart-new').addEventListener('click', () => {
-                    const cartId = `${product.id}-${selectedColor.name.toLowerCase().replace(/ /g, '-')}`;
-                    const cartName = `${product.name} - ${selectedColor.name}`;
+                // Lógica del botón "Agregar al Carrito"
+                addToCartBtn.addEventListener('click', () => {
+                    let selectedSize = null;
+                    if (product.sizes) {
+                        const checkedSizeInput = document.querySelector('input[name="product-size"]:checked');
+                        if (!checkedSizeInput) {
+                            alert('Por favor, selecciona una talla.');
+                            return;
+                        }
+                        selectedSize = checkedSizeInput.value;
+                    }
+
+                    const cartId = `${product.id}-${selectedColor.name.toLowerCase().replace(/\s+/g, '-')}` + (selectedSize ? `-${selectedSize}` : '');
+                    const cartName = `${product.name} - ${selectedColor.name}` + (selectedSize ? ` (Talla: ${selectedSize})` : '');
                     const cartImage = selectedColor.image;
                     const quantity = parseInt(document.getElementById('quantity-input').value);
                     let priceToUse = product.wholesalePrice || product.unitPrice;
-                    addToCart(cartId, cartName, priceToUse, cartImage, quantity);
+                    
+                    if (quantity <= 0) return;
+
+                    addToCart(cartId, cartName, priceToUse, cartImage, quantity, selectedSize);
                     document.getElementById('cart-panel').classList.add('active');
                 });
+            };
+
+            // Lógica especial para la colección de enterizos
+            if (productId === 'enterizos') {
+                // La colección de enterizos ahora también tiene tallas, se renderiza de forma similar a otros productos.
+                renderProduct(); 
+            } else {
+                renderProduct();
             }
 
+            // Lógica general (cantidad, acordeón) que se aplica después de renderizar
             const quantityInput = document.getElementById('quantity-input');
             if(quantityInput) {
                 document.querySelector('.quantity-selector').addEventListener('click', (e) => {
