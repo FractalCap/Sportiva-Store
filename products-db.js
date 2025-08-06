@@ -115,7 +115,7 @@ const productsDB = {
         },
         colors: [
             { name: 'Azul Agua Marina', hex: '#008080', image: '1 short azul agua marina.jpg' },
-            { name: 'Azul Piscina', hex: '#0077be', image: '1 short azul Geo piscina.jpg' },
+            { name: 'Azul Piscina', hex: '#0077be', image: '1 short azul claro piscina.jpg' },
             { name: 'Azul Oscuro', hex: '#465a7e', image: '1 short azul oscuro.jpg' },
             { name: 'Camel', hex: '#c19a6b', image: '1 short camel.jpg' },
             { name: 'Fucsia', hex: '#ff00ff', image: '1 short fucsia.jpg' },
