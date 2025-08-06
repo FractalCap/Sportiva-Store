@@ -101,8 +101,8 @@ const productsDB = {
         productCare: "Lavar a máquina en frío, no usar secadora."
     },
     'short-unicolor': {
-        id: 'short-unicolor',
-        name: 'Short unicolor',
+        id: 'short-tradicional',
+        name: 'Short Tradicional',
         category: 'women',
         unitPrice: 40000,
         wholesalePrice: null,
